@@ -1,0 +1,2 @@
+# CLImber
+A CLI library.
