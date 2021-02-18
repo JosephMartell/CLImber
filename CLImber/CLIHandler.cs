@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace CLImber
 {
@@ -25,59 +26,14 @@ namespace CLImber
             _converters[typeof(int)] = new ArgToInt();
         }
 
-        public string Handle(IEnumerable<string> args)
+        public void Handle(IEnumerable<string> args)
         {
             if (args.Count() <= 0)
-                return "No command supplied"; //eventually this will just automatically display a list of all available commands
-
+                throw new Exception("No command specified"); //eventually this will just automatically display a list of all available commands
 
             var targetType = RetrieveTypeForCommand(args.First());
             object cmd = ConstructCmdType(targetType);
-
-            IEnumerable<string> paramArgs = args.Skip(1);
-            //After instantiation, use the remaining arguments and translators to find the apporpriate
-            //handler method.
-            var possibleHandlerMethods =
-                from m in targetType.GetMethods()
-                let attributes = m.GetCustomAttributes(typeof(CommandHandlerAttribute), true)
-                where (attributes != null && attributes.Length > 0)
-                   && (m.GetParameters().Count() == paramArgs.Count())
-                select m;
-
-            if (possibleHandlerMethods.Count() > 1)
-                throw new Exception("Multiple handlers exist with the same signature. Could not determine which handler to call.");
-
-            if (possibleHandlerMethods.Count() < 1)
-                throw new Exception("No handler was found for the given arguments.");
-
-            if (possibleHandlerMethods.Count() == 1)
-            {
-                List<object> convertedParams = new List<object>();
-
-                for (int i = 0; i < possibleHandlerMethods.First().GetParameters().Count(); i++)
-                {
-                    if (possibleHandlerMethods.First().GetParameters().ElementAt(i).ParameterType != typeof(string))
-                    {
-                        if (_converters.ContainsKey(possibleHandlerMethods.First().GetParameters().ElementAt(i).ParameterType))
-                        {
-                            convertedParams.Add(_converters[possibleHandlerMethods.First().GetParameters().ElementAt(i).ParameterType].ConvertArgument(paramArgs.ElementAt(i)));
-                        }
-                        else
-                        {
-                            throw new Exception("Converter for argument type is not registered. Parameter: " + possibleHandlerMethods.First().GetParameters().ElementAt(i).Name + " of type " + possibleHandlerMethods.First().GetParameters().ElementAt(i).ParameterType);
-                        }
-                    }
-                    else
-                    {
-                        convertedParams.Add(paramArgs.ElementAt(i));
-                    }
-                    
-                }
-                possibleHandlerMethods.First().Invoke(cmd, convertedParams.ToArray());
-            }
-
-
-            return "constructor called";
+            InvokeHandlerMethod(targetType, cmd, args.Skip(1));
         }
 
         private Type RetrieveTypeForCommand(string command)
@@ -128,6 +84,65 @@ namespace CLImber
 
             return targetType.GetConstructors().First().Invoke(requiredResources.ToArray());
         }
-    }
 
+        //TODO: Review exceptions for converting to error messages back to user.
+        private void InvokeHandlerMethod(Type targetType, object cmd, IEnumerable<string> paramArgs)
+        {
+            var possibleHandlerMethods =
+                from m in targetType.GetMethods()
+                let attributes = m.GetCustomAttributes(typeof(CommandHandlerAttribute), true)
+                where (attributes != null && attributes.Length > 0)
+                   && (m.GetParameters().Count() == paramArgs.Count())
+                select m;
+
+            //Temporary exception condition. Eventually we will just try multiple handlers starting with
+            //the most specific signatures (the one that requires the most type conversion)
+            if (possibleHandlerMethods.Count() > 1)
+                throw new Exception("Multiple handlers exist with the same signature. Could not determine which handler to call.");
+
+            if (possibleHandlerMethods.Count() < 1)
+                throw new Exception("No handler was found for the given arguments.");
+
+            if (possibleHandlerMethods.Count() == 1)
+            {
+                var handlerMethod = possibleHandlerMethods.First();
+                try
+                {
+                    List<object> convertedParams = ConvertParams(handlerMethod.GetParameters(), paramArgs);
+                    handlerMethod.Invoke(cmd, convertedParams.ToArray());
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Could not parse command. {ex.Message}");
+                }
+            }
+        }
+
+        private List<object> ConvertParams(IEnumerable<ParameterInfo> methodParms, IEnumerable<string> paramArgs)
+        {
+            List<object> convertedParams = new List<object>();
+            for (int i = 0; i < methodParms.Count(); i++)
+            {
+                convertedParams.Add(
+                    ConvertParam(paramArgs.ElementAt(i),
+                    methodParms.ElementAt(i).ParameterType));
+            }
+
+            return convertedParams;
+        }
+
+        private object ConvertParam(string parameter, Type desiredType)
+        {
+            if (desiredType == typeof(string))
+                return parameter;
+
+            if (_converters.ContainsKey(desiredType))
+            {
+                return _converters[desiredType]
+                    .ConvertArgument(parameter);
+            }
+
+            throw new Exception($"Converter not registered for type {desiredType}");
+        }
+    }
 }

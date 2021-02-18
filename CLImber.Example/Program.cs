@@ -29,13 +29,13 @@ namespace CLImber.Example
             CLImberConfig();
             if (args.Length == 0)
             {
-                Console.WriteLine(_handler.Handle(new string[] { "status", "Title" }));
-                Console.WriteLine(_handler.Handle(new string[] { "add", "some other thing", "yet another thing" }));
-                Console.WriteLine(_handler.Handle(new string[] { "add", "5" }));
+                _handler.Handle(new string[] { "status", "Title" });
+                _handler.Handle(new string[] { "add", "some other thing", "yet another thing" });
+                _handler.Handle(new string[] { "add", "5" });
             }
             else
             {
-                Console.WriteLine(_handler.Handle(args));
+                _handler.Handle(args);
             }
         }
     }
@@ -71,33 +71,6 @@ namespace CLImber.Example
         }
     }
 
-    [CommandClass("add")]
-    public class AddCmdHandler
-    {
-        public AddCmdHandler(ITestResource resource)
-        {
-            Console.WriteLine("This constructor uses a resource: " + resource.Resource);
-            Console.WriteLine("Add Command Handler Class Constructor");
-        }
-
-        [CommandHandler]
-        public void AddSomething()
-        {
-            Console.WriteLine("This is the place to add something to a thing");
-        }
-
-        [CommandHandler]
-        public void AnotherHandlerForAdd(string someString, string anotherString)
-        {
-            Console.WriteLine("Add handler with a parameter: " + someString + " " + anotherString);
-        }
-
-        [CommandHandler]
-        public void HandlerThatTakesInt(int value)
-        {
-            Console.WriteLine("ADD handler that grabs an int: " + value);
-        }
-    }
 
     public class ArgToIP
         : IArgumentTypeConverter
