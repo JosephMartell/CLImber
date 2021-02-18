@@ -4,55 +4,152 @@ using System.Linq;
 
 namespace CLImber
 {
+
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
+    public class DesignatedConverterAttribute
+        : Attribute
+    {
+        public DesignatedConverterAttribute(int argumentNumber, string converterName)
+        {
+            ArgumentNumber = argumentNumber;
+            ConverterName = converterName;
+        }
+
+        public int ArgumentNumber { get; }
+        public string ConverterName { get; }
+    }
     public class CLIHandler
     {
-
-        private Type _handler;
-        private List<IArgumentTypeConverter> _converters;
-
-        public void RegisterCmdHandler<T>(string cmd, List<IArgumentTypeConverter> converters) where T : CommandBase
-        {
-            _handler = typeof(T);
-            _converters = converters;
-        }
+        private Dictionary<Type, IArgumentTypeConverter> _converters = new Dictionary<Type, IArgumentTypeConverter>();
 
         public string Handle(IEnumerable<string> args)
         {
-            var convertedParms = new List<object>();
+            if (args.Count() <= 0)
+                return "No command supplied"; //eventually this will just automatically display a list of all available commands
 
-            for (int i = 0; i < args.Count(); i++)
+
+            var targetType = RetrieveTypeForCommand(args.First());
+            object cmd = ConstructCmdType(targetType);
+
+            IEnumerable<string> paramArgs = args.Skip(1);
+            //After instantiation, use the remaining arguments and translators to find the apporpriate
+            //handler method.
+            var possibleHandlerMethods =
+                from m in targetType.GetMethods()
+                let attributes = m.GetCustomAttributes(typeof(CommandHandlerAttribute), true)
+                where (attributes != null && attributes.Length > 0)
+                   && (m.GetParameters().Count() == paramArgs.Count())
+                select m;
+
+            if (possibleHandlerMethods.Count() > 1)
+                throw new Exception("Multiple handlers exist with the same signature. Could not determine which handler to call.");
+
+            if (possibleHandlerMethods.Count() < 1)
+                throw new Exception("No handler was found for the given arguments.");
+
+            if (possibleHandlerMethods.Count() == 1)
             {
-                convertedParms.Add(_converters[i].ConvertArgument(args.ElementAt(i)));
+                List<object> convertedParams = new List<object>();
+
+                for (int i = 0; i < possibleHandlerMethods.First().GetParameters().Count(); i++)
+                {
+                    if (possibleHandlerMethods.First().GetParameters().ElementAt(i).ParameterType != typeof(string))
+                    {
+                        if (_converters.ContainsKey(possibleHandlerMethods.First().GetParameters().ElementAt(i).ParameterType))
+                        {
+                            convertedParams.Add(_converters[possibleHandlerMethods.First().GetParameters().ElementAt(i).ParameterType].ConvertArgument(paramArgs.ElementAt(i)));
+                        }
+                        else
+                        {
+                            throw new Exception("Converter for argument type is not registered. Parameter: " + possibleHandlerMethods.First().GetParameters().ElementAt(i).Name + " of type " + possibleHandlerMethods.First().GetParameters().ElementAt(i).ParameterType);
+                        }
+                    }
+                    else
+                    {
+                        convertedParams.Add(paramArgs.ElementAt(i));
+                    }
+                    
+                }
+                possibleHandlerMethods.First().Invoke(cmd, convertedParams.ToArray());
             }
-            var ctors = _handler.GetConstructors().Where((info) => info.IsPublic);
 
-            var chosenCtor = from c in ctors
-                             where (c.GetParameters().Count() == args.Count())
-                                && (c.GetParameters().Select(p => p.ParameterType).Except(convertedParms.Select(a => a.GetType()))).Count() == 0
-                             select c;
 
-            if (chosenCtor.Count() > 1)
-            { 
-                return "Could not determine constructor based on passed parameters";
-            }
-
-            chosenCtor.First().Invoke(args.ToArray());
             return "constructor called";
         }
 
-        //protected IEnumerable<object> TranslateParameters(IEnumerable<string> args)
-        //{
+        private Type RetrieveTypeForCommand(string command)
+        {
+            var typesWithAttr =
+                from a in AppDomain.CurrentDomain.GetAssemblies()
+                from t in a.GetTypes()
+                let attributes = t.GetCustomAttributes(typeof(CommandClassAttribute), true)
+                where attributes != null && attributes.Length > 0
+                select new { Type = t, Attributes = attributes.Cast<CommandClassAttribute>() };
 
-        //}
-    }
+            //then based on the command parsed from the args list, select the appropriate class and 
+            //use reflection to instantiate and process.
+            var selectedCmd = from t in typesWithAttr
+                              let attributes = t.Attributes
+                              from a in attributes
+                              where a.CommandName == command
+                              select t;
 
-    public class CommandBase
-    {
+            if (selectedCmd.Count() > 1)
+                throw new Exception($"More than one class assigned to handle command {command}");
 
+            if (selectedCmd.Count() < 1)
+                throw new Exception($"No handler registered for command: {command}");
+
+            return selectedCmd.First().Type;
+        }
+
+        private object ConstructCmdType(Type targetType)
+        {
+            if (targetType.GetConstructors().First().GetParameters().Count() < 1)
+            {
+                return targetType.GetConstructors().First().Invoke(new object[] { });
+            }
+
+            List<object> requiredResources = new List<object>();
+            foreach (var param in targetType.GetConstructors().First().GetParameters())
+            {
+                if (_resources.ContainsKey(param.ParameterType))
+                {
+                    requiredResources.Add(_resources[param.ParameterType]);
+                }
+                else
+                {
+                    throw new Exception($"Required resource is not registered: {param.ParameterType}");
+                }
+            }
+
+            return targetType.GetConstructors().First().Invoke(requiredResources.ToArray());
+        }
+
+        protected Dictionary<System.Type, object> _resources = new Dictionary<Type, object>();
+        public CLIHandler RegisterResource<T>(T resource)
+        {
+            _resources[typeof(T)] = resource;
+            return this;
+        }
+
+        public CLIHandler()
+        {
+            _converters[typeof(int)] = new ArgToInt();
+        }
     }
 
     public interface IArgumentTypeConverter
     {
         object ConvertArgument(string arg);
+    }
+
+    public class ArgToInt
+        : IArgumentTypeConverter
+    {
+        public object ConvertArgument(string arg)
+        {
+            return int.Parse(arg);
+        }
     }
 }
