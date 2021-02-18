@@ -19,7 +19,8 @@ namespace CLImber.Example
     {
         static void CLImberConfig()
         {
-            _handler.RegisterResource<ITestResource>(new TestResource());
+            _handler.RegisterResource<ITestResource>(new TestResource())
+                .RegisterTypeConverter<System.Net.IPAddress>(new ArgToIP());
         }
 
         static CLIHandler _handler = new CLIHandler();
@@ -39,6 +40,16 @@ namespace CLImber.Example
         }
     }
 
+    [CommandClass("network")]
+    public class NetworkCommand
+    {
+        [CommandHandler]
+        public void WhatIsTheIP(System.Net.IPAddress ip)
+        {
+            Console.WriteLine("We were successfully passed an IP Address! " + ip);
+        }
+    }
+
     [CommandClass("status")]
     public class StatusCmdHandler
     {
@@ -47,15 +58,6 @@ namespace CLImber.Example
         {
             Console.WriteLine("This method is invoked entirely via reflection");
         }
-
-        //This is an example of explicitly designated type converter for individual arguments
-        //[CommandHandler]
-        //[DesignatedConverter(0, "stringToInt")]
-        //[DesignatedConverter(1, "stringToInt")]
-        //public void LineLimitedStatusReport(int lines, int columnLimit)
-        //{
-
-        //}
 
         [CommandHandler]
         public void StatusReportWithTitle(string title)
@@ -97,12 +99,12 @@ namespace CLImber.Example
         }
     }
 
-    public class ArgToInt
+    public class ArgToIP
         : IArgumentTypeConverter
     {
-        object IArgumentTypeConverter.ConvertArgument(string arg)
+        public object ConvertArgument(string arg)
         {
-            return int.Parse(arg);
+            return System.Net.IPAddress.Parse(arg);
         }
     }
 }

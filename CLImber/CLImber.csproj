@@ -2,6 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>https://github.com/JosephMartell/CLImber</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/JosephMartell/CLImber</RepositoryUrl>
   </PropertyGroup>
 
 </Project>

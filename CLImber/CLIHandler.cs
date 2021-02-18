@@ -4,23 +4,26 @@ using System.Linq;
 
 namespace CLImber
 {
-
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
-    public class DesignatedConverterAttribute
-        : Attribute
-    {
-        public DesignatedConverterAttribute(int argumentNumber, string converterName)
-        {
-            ArgumentNumber = argumentNumber;
-            ConverterName = converterName;
-        }
-
-        public int ArgumentNumber { get; }
-        public string ConverterName { get; }
-    }
     public class CLIHandler
     {
         private Dictionary<Type, IArgumentTypeConverter> _converters = new Dictionary<Type, IArgumentTypeConverter>();
+        public CLIHandler RegisterTypeConverter<T>(IArgumentTypeConverter converter)
+        {
+            _converters[typeof(T)] = converter;
+            return this;
+        }
+
+        protected Dictionary<System.Type, object> _resources = new Dictionary<Type, object>();
+        public CLIHandler RegisterResource<T>(T resource)
+        {
+            _resources[typeof(T)] = resource;
+            return this;
+        }
+
+        public CLIHandler()
+        {
+            _converters[typeof(int)] = new ArgToInt();
+        }
 
         public string Handle(IEnumerable<string> args)
         {
@@ -125,31 +128,6 @@ namespace CLImber
 
             return targetType.GetConstructors().First().Invoke(requiredResources.ToArray());
         }
-
-        protected Dictionary<System.Type, object> _resources = new Dictionary<Type, object>();
-        public CLIHandler RegisterResource<T>(T resource)
-        {
-            _resources[typeof(T)] = resource;
-            return this;
-        }
-
-        public CLIHandler()
-        {
-            _converters[typeof(int)] = new ArgToInt();
-        }
     }
 
-    public interface IArgumentTypeConverter
-    {
-        object ConvertArgument(string arg);
-    }
-
-    public class ArgToInt
-        : IArgumentTypeConverter
-    {
-        public object ConvertArgument(string arg)
-        {
-            return int.Parse(arg);
-        }
-    }
 }
