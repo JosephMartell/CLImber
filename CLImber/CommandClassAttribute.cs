@@ -2,7 +2,7 @@
 
 namespace CLImber
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited =true)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = true)]
     public class CommandClassAttribute
         : System.Attribute
     {

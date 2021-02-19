@@ -7,7 +7,7 @@ namespace CLImber
 {
     public class CLIHandler
     {
-        private Dictionary<Type, IArgumentTypeConverter> _converters = new Dictionary<Type, IArgumentTypeConverter>();
+        private readonly Dictionary<Type, IArgumentTypeConverter> _converters = new Dictionary<Type, IArgumentTypeConverter>();
         public CLIHandler RegisterTypeConverter<T>(IArgumentTypeConverter converter)
         {
             _converters[typeof(T)] = converter;
@@ -29,7 +29,10 @@ namespace CLImber
         public void Handle(IEnumerable<string> args)
         {
             if (args.Count() <= 0)
-                throw new Exception("No command specified"); //eventually this will just automatically display a list of all available commands
+            {
+                UsageDocumenter.ShowUsageForAll();
+                return;
+            }
 
             var targetType = RetrieveTypeForCommand(args.First());
             object cmd = ConstructCmdType(targetType);
@@ -143,6 +146,47 @@ namespace CLImber
             }
 
             throw new Exception($"Converter not registered for type {desiredType}");
+        }
+    }
+
+    public static class UsageDocumenter
+    {
+        public static void ShowUsageForAll()
+        {
+            var typesWithAttr =
+                from a in AppDomain.CurrentDomain.GetAssemblies()
+                from t in a.GetTypes()
+                let attributes = t.GetCustomAttributes(typeof(CommandClassAttribute), true)
+                where attributes != null && attributes.Length > 0
+                select new { Type = t, Attributes = attributes.Cast<CommandClassAttribute>() };
+
+            typesWithAttr = typesWithAttr.OrderBy(a => a.Attributes.First().CommandName);
+
+            //foreach type get the names of the parameters and create a printout
+            foreach (var type in typesWithAttr)
+            {
+                var possibleHandlerMethods =
+                    from m in type.Type.GetMethods()
+                    let attributes = m.GetCustomAttributes(typeof(CommandHandlerAttribute), true)
+                    where (attributes != null && attributes.Length > 0)
+                    orderby m.GetParameters().Count() ascending
+                    select m;
+
+                var cmdName = type.Attributes.ElementAt(0).CommandName;
+                Console.WriteLine("Usage of " + cmdName);
+
+                foreach (var method in possibleHandlerMethods)
+                {
+                    string output = cmdName;
+                    foreach (var param in method.GetParameters())
+                    {
+                        output += " " + param.Name;
+                    }
+                    Console.WriteLine($"\t{output}");
+                }
+
+                Console.WriteLine("\n");
+            }
         }
     }
 }

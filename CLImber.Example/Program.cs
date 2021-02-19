@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using CLImber;
 
 namespace CLImber.Example
 {
@@ -23,15 +21,15 @@ namespace CLImber.Example
                 .RegisterTypeConverter<System.Net.IPAddress>(new ArgToIP());
         }
 
-        static CLIHandler _handler = new CLIHandler();
+        static readonly CLIHandler _handler = new CLIHandler();
         static void Main(string[] args)
         {
             CLImberConfig();
             if (args.Length == 0)
             {
                 _handler.Handle(new string[] { "status", "Title" });
-                _handler.Handle(new string[] { "add", "some other thing", "yet another thing" });
-                _handler.Handle(new string[] { "add", "5" });
+                _handler.Handle(new string[] { "add", "test profile", "192.168.1.99", "255.255.255.0" });
+                _handler.Handle(new string[] { });
             }
             else
             {
@@ -64,7 +62,7 @@ namespace CLImber.Example
         {
             Console.WriteLine("Status report with title: " + title);
         }
-            
+
         public StatusCmdHandler()
         {
             Console.WriteLine("Default constructor");
