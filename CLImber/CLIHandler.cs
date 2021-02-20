@@ -14,7 +14,7 @@ namespace CLImber
             return this;
         }
 
-        protected Dictionary<System.Type, object> _resources = new Dictionary<Type, object>();
+        protected Dictionary<Type, object> _resources = new Dictionary<Type, object>();
         public CLIHandler RegisterResource<T>(T resource)
         {
             _resources[typeof(T)] = resource;
@@ -34,69 +34,54 @@ namespace CLImber
                 return;
             }
 
-            var targetType = RetrieveTypeForCommand(args.First());
-            object cmd = ConstructCmdType(targetType);
-            InvokeHandlerMethod(targetType, cmd, args.Skip(1));
+            try
+            {
+                var commandType = RetrieveTypeForCommand(args.First());
+                object cmd = ConstructCmdType(commandType);
+                InvokeHandlerMethod(commandType, cmd, args.Skip(1));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
         private Type RetrieveTypeForCommand(string command)
         {
-            var typesWithAttr =
-                from a in AppDomain.CurrentDomain.GetAssemblies()
-                from t in a.GetTypes()
-                let attributes = t.GetCustomAttributes(typeof(CommandClassAttribute), true)
-                where attributes != null && attributes.Length > 0
-                select new { Type = t, Attributes = attributes.Cast<CommandClassAttribute>() };
+            var possibleCommandHandlers = AssemblySearcher.GetCommandClasses(command);
 
-            //then based on the command parsed from the args list, select the appropriate class and 
-            //use reflection to instantiate and process.
-            var selectedCmd = from t in typesWithAttr
-                              let attributes = t.Attributes
-                              from a in attributes
-                              where a.CommandName == command
-                              select t;
-
-            if (selectedCmd.Count() > 1)
+            if (possibleCommandHandlers.Count() > 1)
                 throw new Exception($"More than one class assigned to handle command {command}");
 
-            if (selectedCmd.Count() < 1)
+            if (possibleCommandHandlers.Count() < 1)
                 throw new Exception($"No handler registered for command: {command}");
 
-            return selectedCmd.First().Type;
+            return possibleCommandHandlers.First();
         }
 
-        private object ConstructCmdType(Type targetType)
+        private object ConstructCmdType(Type commandType)
         {
-            if (targetType.GetConstructors().First().GetParameters().Count() < 1)
+            if (commandType.GetConstructors().First().GetParameters().Count() < 1)
             {
-                return targetType.GetConstructors().First().Invoke(new object[] { });
+                return commandType.GetConstructors().First().Invoke(new object[] { });
             }
 
             List<object> requiredResources = new List<object>();
-            foreach (var param in targetType.GetConstructors().First().GetParameters())
+            foreach (var param in commandType.GetConstructors().First().GetParameters())
             {
-                if (_resources.ContainsKey(param.ParameterType))
-                {
-                    requiredResources.Add(_resources[param.ParameterType]);
-                }
-                else
+                if (!_resources.ContainsKey(param.ParameterType))
                 {
                     throw new Exception($"Required resource is not registered: {param.ParameterType}");
                 }
+                requiredResources.Add(_resources[param.ParameterType]);
             }
 
-            return targetType.GetConstructors().First().Invoke(requiredResources.ToArray());
+            return commandType.GetConstructors().First().Invoke(requiredResources.ToArray());
         }
 
-        //TODO: Review exceptions for converting to error messages back to user.
-        private void InvokeHandlerMethod(Type targetType, object cmd, IEnumerable<string> paramArgs)
+        private void InvokeHandlerMethod(Type commandType, object cmd, IEnumerable<string> paramArgs)
         {
-            var possibleHandlerMethods =
-                from m in targetType.GetMethods()
-                let attributes = m.GetCustomAttributes(typeof(CommandHandlerAttribute), true)
-                where (attributes != null && attributes.Length > 0)
-                   && (m.GetParameters().Count() == paramArgs.Count())
-                select m;
+            var possibleHandlerMethods = AssemblySearcher.GetCommandMethods(commandType, paramArgs.Count());
 
             //Temporary exception condition. Eventually we will just try multiple handlers starting with
             //the most specific signatures (the one that requires the most type conversion)
@@ -106,19 +91,10 @@ namespace CLImber
             if (possibleHandlerMethods.Count() < 1)
                 throw new Exception("No handler was found for the given arguments.");
 
-            if (possibleHandlerMethods.Count() == 1)
-            {
-                var handlerMethod = possibleHandlerMethods.First();
-                try
-                {
-                    List<object> convertedParams = ConvertParams(handlerMethod.GetParameters(), paramArgs);
-                    handlerMethod.Invoke(cmd, convertedParams.ToArray());
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Could not parse command. {ex.Message}");
-                }
-            }
+            var handlerMethod = possibleHandlerMethods.First();
+
+            List<object> convertedParams = ConvertParams(handlerMethod.GetParameters(), paramArgs);
+            handlerMethod.Invoke(cmd, convertedParams.ToArray());
         }
 
         private List<object> ConvertParams(IEnumerable<ParameterInfo> methodParms, IEnumerable<string> paramArgs)
@@ -139,54 +115,11 @@ namespace CLImber
             if (desiredType == typeof(string))
                 return parameter;
 
-            if (_converters.ContainsKey(desiredType))
-            {
-                return _converters[desiredType]
-                    .ConvertArgument(parameter);
-            }
-
-            throw new Exception($"Converter not registered for type {desiredType}");
-        }
-    }
-
-    public static class UsageDocumenter
-    {
-        public static void ShowUsageForAll()
-        {
-            var typesWithAttr =
-                from a in AppDomain.CurrentDomain.GetAssemblies()
-                from t in a.GetTypes()
-                let attributes = t.GetCustomAttributes(typeof(CommandClassAttribute), true)
-                where attributes != null && attributes.Length > 0
-                select new { Type = t, Attributes = attributes.Cast<CommandClassAttribute>() };
-
-            typesWithAttr = typesWithAttr.OrderBy(a => a.Attributes.First().CommandName);
-
-            //foreach type get the names of the parameters and create a printout
-            foreach (var type in typesWithAttr)
-            {
-                var possibleHandlerMethods =
-                    from m in type.Type.GetMethods()
-                    let attributes = m.GetCustomAttributes(typeof(CommandHandlerAttribute), true)
-                    where (attributes != null && attributes.Length > 0)
-                    orderby m.GetParameters().Count() ascending
-                    select m;
-
-                var cmdName = type.Attributes.ElementAt(0).CommandName;
-                Console.WriteLine("Usage of " + cmdName);
-
-                foreach (var method in possibleHandlerMethods)
-                {
-                    string output = cmdName;
-                    foreach (var param in method.GetParameters())
-                    {
-                        output += " " + param.Name;
-                    }
-                    Console.WriteLine($"\t{output}");
-                }
-
-                Console.WriteLine("\n");
-            }
+            if (!_converters.ContainsKey(desiredType))
+                throw new Exception($"Converter not registered for type {desiredType}");
+    
+            return _converters[desiredType]
+                .ConvertArgument(parameter);
         }
     }
 }

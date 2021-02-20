@@ -6,6 +6,14 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/JosephMartell/CLImber</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JosephMartell/CLImber</RepositoryUrl>
+    <Version>0.2.0</Version>
+    <Authors>Joseph Martell</Authors>
+    <Description>CLImber is a Command Line Interface library.</Description>
+    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+    <PackageTags>CLI, Command Line, terminal, shell</PackageTags>
+    <PackageReleaseNotes>Initial release. Supports commands, arguments, and usage help.</PackageReleaseNotes>
+    <RepositoryType>git</RepositoryType>
+    <PackageId>JM.CLImber</PackageId>
   </PropertyGroup>
 
 </Project>
