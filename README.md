@@ -12,7 +12,7 @@ My goal with CLImber is to keep it as small and as portable as possible.
 That's it. There are no other libraries, dependencies, or technologies. It should be noted that CLImber does use reflection to do most of its work.
 
 ## Setup
-CLImber will be a published NuGet package. There are a few more features to complete before publishing though.
+Search for JM.CLImber on NuGet
 
 ## Use
 CLImber defines 3 types of command line artifacts. These are inspired by the git command line, so we will use that as an example:
