@@ -38,7 +38,7 @@ namespace CLImber.Example
         }
     }
 
-    [CommandClass("network")]
+    [CommandClass("network", ShortDescription = "Creates a network entry with an IP address")]
     public class NetworkCommand
     {
         [CommandHandler]
@@ -57,7 +57,7 @@ namespace CLImber.Example
             Console.WriteLine("This method is invoked entirely via reflection");
         }
 
-        [CommandHandler]
+        [CommandHandler(ShortDescription = "Prints a status report with the supplied title.")]
         public void StatusReportWithTitle(string title)
         {
             Console.WriteLine("Status report with title: " + title);
