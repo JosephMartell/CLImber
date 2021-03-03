@@ -6,12 +6,15 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/JosephMartell/CLImber</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JosephMartell/CLImber</RepositoryUrl>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Authors>Joseph Martell</Authors>
     <Description>CLImber is a Command Line Interface library.</Description>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <PackageTags>CLI, Command Line, terminal, shell</PackageTags>
-    <PackageReleaseNotes>Initial release. Supports commands, arguments, and usage help.</PackageReleaseNotes>
+    <PackageReleaseNotes>New features: 
+- When no commands are supplied CLImber will print out usage information for all commands in the assembly.
+- Instead of requiring a class to implement ITypeConverter, CLImber now accepts Func arguments for type conversion
+- CommandClass and CommandHandler attributes now accept an optional short description that is printed with the usage information.</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <PackageId>JM.CLImber</PackageId>
   </PropertyGroup>
