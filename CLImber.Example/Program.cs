@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 
 namespace CLImber.Example
 {
@@ -18,7 +19,7 @@ namespace CLImber.Example
         static void CLImberConfig()
         {
             _handler.RegisterResource<ITestResource>(new TestResource())
-                .RegisterTypeConverter<System.Net.IPAddress>(new ArgToIP());
+                .RegisterTypeConverter<IPAddress>((arg) => IPAddress.Parse(arg));
         }
 
         static readonly CLIHandler _handler = new CLIHandler();
@@ -38,11 +39,11 @@ namespace CLImber.Example
         }
     }
 
-    [CommandClass("network")]
+    [CommandClass("network", ShortDescription = "Creates a network entry with an IP address")]
     public class NetworkCommand
     {
         [CommandHandler]
-        public void WhatIsTheIP(System.Net.IPAddress ip)
+        public void WhatIsTheIP(IPAddress ip)
         {
             Console.WriteLine("We were successfully passed an IP Address! " + ip);
         }
@@ -57,7 +58,7 @@ namespace CLImber.Example
             Console.WriteLine("This method is invoked entirely via reflection");
         }
 
-        [CommandHandler]
+        [CommandHandler(ShortDescription = "Prints a status report with the supplied title.")]
         public void StatusReportWithTitle(string title)
         {
             Console.WriteLine("Status report with title: " + title);
@@ -66,16 +67,6 @@ namespace CLImber.Example
         public StatusCmdHandler()
         {
             Console.WriteLine("Default constructor");
-        }
-    }
-
-
-    public class ArgToIP
-        : IArgumentTypeConverter
-    {
-        public object ConvertArgument(string arg)
-        {
-            return System.Net.IPAddress.Parse(arg);
         }
     }
 }

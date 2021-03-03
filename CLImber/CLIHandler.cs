@@ -7,10 +7,11 @@ namespace CLImber
 {
     public class CLIHandler
     {
-        private readonly Dictionary<Type, IArgumentTypeConverter> _converters = new Dictionary<Type, IArgumentTypeConverter>();
-        public CLIHandler RegisterTypeConverter<T>(IArgumentTypeConverter converter)
+        private readonly Dictionary<Type, Func<string, object>> _converterFuncs = new Dictionary<Type, Func<string, object>>();
+
+        public CLIHandler RegisterTypeConverter<T>(Func<string, object> converterFunc)
         {
-            _converters[typeof(T)] = converter;
+            _converterFuncs[typeof(T)] = converterFunc;
             return this;
         }
 
@@ -23,7 +24,7 @@ namespace CLImber
 
         public CLIHandler()
         {
-            _converters[typeof(int)] = new ArgToInt();
+            _converterFuncs[typeof(int)] = (arg) => int.Parse(arg);
         }
 
         public void Handle(IEnumerable<string> args)
@@ -115,11 +116,10 @@ namespace CLImber
             if (desiredType == typeof(string))
                 return parameter;
 
-            if (!_converters.ContainsKey(desiredType))
+            if (!_converterFuncs.ContainsKey(desiredType))
                 throw new Exception($"Converter not registered for type {desiredType}");
-    
-            return _converters[desiredType]
-                .ConvertArgument(parameter);
+
+            return _converterFuncs[desiredType](parameter);
         }
     }
 }

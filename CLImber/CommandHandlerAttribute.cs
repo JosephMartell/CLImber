@@ -6,6 +6,6 @@ namespace CLImber
     public class CommandHandlerAttribute
         : System.Attribute
     {
-
+        public string ShortDescription { get; set; }
     }
 }
