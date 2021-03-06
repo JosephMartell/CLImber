@@ -8,14 +8,13 @@ namespace CLImber
     public class CLIHandler
     {
         private readonly Dictionary<Type, Func<string, object>> _converterFuncs = new Dictionary<Type, Func<string, object>>();
-
         public CLIHandler RegisterTypeConverter<T>(Func<string, object> converterFunc)
         {
             _converterFuncs[typeof(T)] = converterFunc;
             return this;
         }
 
-        protected Dictionary<Type, object> _resources = new Dictionary<Type, object>();
+        private readonly Dictionary<Type, object> _resources = new Dictionary<Type, object>();
         public CLIHandler RegisterResource<T>(T resource)
         {
             _resources[typeof(T)] = resource;

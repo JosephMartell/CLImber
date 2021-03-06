@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace CLImber
 {
-    public static class AssemblySearcher
+    internal static class AssemblySearcher
     {
         public static IEnumerable<Type> GetCommandClasses()
         {

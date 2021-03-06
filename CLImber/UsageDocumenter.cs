@@ -4,8 +4,7 @@ using System.Text;
 
 namespace CLImber
 {
-
-    public static class UsageDocumenter
+    internal static class UsageDocumenter
     {
         public static void ShowUsageForAll()
         {
