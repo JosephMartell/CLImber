@@ -31,5 +31,21 @@ namespace CLImber.Tests
             DummyCommand.CallCount.Should().Be(callCountBefore + 1);
 
         }
+
+        [Fact]
+        public void Handle_ShouldFindCommand_RegardlessOfArgumentCase()
+        {
+            string[] arguments = { "test_command" };
+            string[] argumentsWithCapitols = { "Test_Command" };
+            string[] argumentsWithRandomCapitols = { "TEst_ComManD" };
+            var callCountBefore = DummyCommand.CallCount;
+
+            _sut.Handle(arguments);
+            _sut.Handle(argumentsWithCapitols);
+            _sut.Handle(argumentsWithRandomCapitols);
+
+            DummyCommand.CallCount.Should().Be(callCountBefore + 3);
+
+        }
     }
 }
