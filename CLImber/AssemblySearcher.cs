@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace CLImber
 {
-    public static class AssemblySearcher
+    internal static class AssemblySearcher
     {
         public static IEnumerable<Type> GetCommandClasses()
         {
@@ -26,7 +26,7 @@ namespace CLImber
                 let attributes = t.GetCustomAttributes(typeof(CommandClassAttribute), true).Cast<CommandClassAttribute>()
                 from attribute in attributes.Cast<CommandClassAttribute>()
                 where attributes != null && attributes.Count() > 0
-                  && (attribute.CommandName == desiredCommand)
+                  && attribute.CommandName.Equals(desiredCommand, StringComparison.OrdinalIgnoreCase)
                 select t;
 
             return cmdTypes;
