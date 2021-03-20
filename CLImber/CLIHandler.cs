@@ -5,6 +5,16 @@ using System.Reflection;
 
 namespace CLImber
 {
+    [AttributeUsage(AttributeTargets.Property)]
+    public class CommandOptionAttribute
+        : Attribute
+    {
+        public string Name { get; }
+        public CommandOptionAttribute(string name)
+        {
+            Name = name;
+        }
+    }
     public class CLIHandler
     {
         private readonly Dictionary<Type, Func<string, object>> _converterFuncs = new Dictionary<Type, Func<string, object>>();
@@ -38,11 +48,41 @@ namespace CLImber
             {
                 var commandType = RetrieveTypeForCommand(args.First());
                 object cmd = ConstructCmdType(commandType);
+                SetCommandOptions(cmd, args.Where(a => a.StartsWith("-")));
                 InvokeHandlerMethod(commandType, cmd, args.Skip(1));
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+            }
+        }
+
+        private void SetCommandOptions(object commandObject, IEnumerable<string> passedOptions)
+        {
+            foreach (var option in passedOptions)
+            {
+                var optionParts = option.Replace("-", "").Split(new char[] { '=' }, 2);
+                string optionName = optionParts.First();
+
+                var selectedOption = from op in commandObject.GetType().GetProperties()
+                                     let attribs = op.GetCustomAttributes<CommandOptionAttribute>()
+                                     where (attribs.Count() > 0)
+                                     from att in attribs
+                                     where att.Name.Equals(optionName, StringComparison.OrdinalIgnoreCase)
+                                     select op;
+
+                if (selectedOption.Count() == 1)
+                {
+                    var cmdProperty = selectedOption.First();
+                    if (cmdProperty.PropertyType == typeof(bool))
+                    {
+                        cmdProperty.SetValue(commandObject, true);
+                    }
+                    else if (cmdProperty.PropertyType == typeof(string))
+                    {
+                        cmdProperty.SetValue(commandObject, optionParts.Skip(1).First());
+                    }
+                }
             }
         }
 

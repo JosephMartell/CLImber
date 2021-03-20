@@ -9,10 +9,40 @@ namespace CLImber.Tests
     {
         public static int CallCount { get; private set; } = 0;
 
+        public static bool Flag { get; private set; } = false;
+
+        public static string StringOption { get; private set; } = string.Empty;
+
         [CommandHandler]
         public void DefaultHandler()
         {
             CallCount++;
+        }
+
+        [CommandOption("flag")]
+        public bool InstanceFlag
+        {
+            get
+            {
+                return Flag;
+            }
+            set
+            {
+                Flag = value;
+            }
+        }
+
+        [CommandOption("stringOption")]
+        public string InstanceStringOption
+        {
+            get
+            {
+                return StringOption;
+            }
+            set
+            {
+                StringOption = value;
+            }
         }
     }
 
@@ -47,5 +77,28 @@ namespace CLImber.Tests
             DummyCommand.CallCount.Should().Be(callCountBefore + 3);
 
         }
+
+        [Fact]
+        public void Handle_ShouldSetBoolProp_WhenOptionIsInArgs()
+        {
+            string[] arguments = { "test_command" , "--flag" };
+            DummyCommand.Flag.Should().BeFalse();
+
+            _sut.Handle(arguments);
+
+            DummyCommand.Flag.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Handle_ShouldSetStringProp_WithValueAfterEqualSign()
+        {
+            string[] arguments = { "test_command", "--stringOption=this is the new value" };
+            DummyCommand.StringOption.Should().BeEquivalentTo(string.Empty);
+
+            _sut.Handle(arguments);
+
+            DummyCommand.StringOption.Should().BeEquivalentTo("this is the new value");
+        }
+
     }
 }
