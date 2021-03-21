@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Reflection;
 namespace CLImber
 {
     internal static class AssemblySearcher
@@ -37,7 +37,7 @@ namespace CLImber
             return type.GetCustomAttributes(typeof(CommandClassAttribute), false).Cast<CommandClassAttribute>().First().CommandName;
         }
 
-        public static IEnumerable<System.Reflection.MethodInfo> GetCommandMethods(Type type)
+        public static IEnumerable<MethodInfo> GetCommandMethods(Type type)
         {
             return from methods in type.GetMethods()
                    let attributes = methods.GetCustomAttributes(typeof(CommandHandlerAttribute), true)
@@ -46,7 +46,7 @@ namespace CLImber
                    select methods;
         }
 
-        public static IEnumerable<System.Reflection.MethodInfo> GetCommandMethods(Type type, int argumentCount)
+        public static IEnumerable<MethodInfo> GetCommandMethods(Type type, int argumentCount)
         {
             return from method in type.GetMethods()
                    let attributes = method.GetCustomAttributes(typeof(CommandHandlerAttribute), true)
@@ -55,5 +55,17 @@ namespace CLImber
                    orderby method.GetParameters().Count() ascending
                    select method;
         }
+
+        public static IEnumerable<PropertyInfo> GetCommandOptionPropertyByName(Type type, string optionName)
+        {
+            var selectedOption = from op in type.GetProperties()
+                                 let attribs = op.GetCustomAttributes<CommandOptionAttribute>()
+                                 where (attribs.Count() > 0)
+                                 from att in attribs
+                                 where att.Name.Equals(optionName, StringComparison.OrdinalIgnoreCase)
+                                 select op;
+            return selectedOption;
+        }
+
     }
 }

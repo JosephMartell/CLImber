@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace CLImber
 {
-    [AttributeUsage(AttributeTargets.Property)]
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple =true, Inherited = false)]
     public class CommandOptionAttribute
         : Attribute
     {
@@ -61,29 +61,68 @@ namespace CLImber
         {
             foreach (var option in passedOptions)
             {
-                var optionParts = option.Replace("-", "").Split(new char[] { '=' }, 2);
-                string optionName = optionParts.First();
-
-                var selectedOption = from op in commandObject.GetType().GetProperties()
-                                     let attribs = op.GetCustomAttributes<CommandOptionAttribute>()
-                                     where (attribs.Count() > 0)
-                                     from att in attribs
-                                     where att.Name.Equals(optionName, StringComparison.OrdinalIgnoreCase)
-                                     select op;
-
-                if (selectedOption.Count() == 1)
+                if (option.StartsWith("--"))
                 {
-                    var cmdProperty = selectedOption.First();
-                    if (cmdProperty.PropertyType == typeof(bool))
-                    {
-                        cmdProperty.SetValue(commandObject, true);
-                    }
-                    else if (cmdProperty.PropertyType == typeof(string))
-                    {
-                        cmdProperty.SetValue(commandObject, optionParts.Skip(1).First());
-                    }
+                    ProcessFullOption(commandObject, option);
                 }
+
+                //anything left must be a short option. Could be aggregated short option
+                ProcessShortOptions(commandObject, option);
+                
             }
+        }
+
+        private void ProcessShortOptions(object commandObject, string option)
+        {
+            var optionArg = ParseOptionArgument(option);
+            foreach (var letter in optionArg.Name)
+            {
+                var optionProperty = AssemblySearcher
+                    .GetCommandOptionPropertyByName(
+                    commandObject.GetType(),
+                    letter.ToString());
+
+                ProcessOption(commandObject, optionProperty.First(), optionArg.Value);
+            }
+        }
+
+        private void ProcessFullOption(object commandObject, string option)
+        {
+            var optionArg = ParseOptionArgument(option);
+
+            var optionProperty = AssemblySearcher
+                .GetCommandOptionPropertyByName(
+                commandObject.GetType(),
+                optionArg.Name);
+
+            ProcessOption(commandObject, optionProperty.First(), optionArg.Value);
+        }
+
+        private void ProcessOption(object cmdObject, PropertyInfo propertyInfo, string value)
+        {
+            if (propertyInfo.PropertyType == typeof(bool))
+            {
+                propertyInfo.SetValue(cmdObject, true);
+                return;
+            }
+            
+            if (propertyInfo.PropertyType == typeof(string))
+            {
+                propertyInfo.SetValue(cmdObject, value);
+                return;
+            }
+            
+            if (_converterFuncs.ContainsKey(propertyInfo.PropertyType))
+            {
+                propertyInfo.SetValue(cmdObject, _converterFuncs[propertyInfo.PropertyType](value));
+                return;
+            }
+        }
+
+        private (string Name, string Value) ParseOptionArgument(string optionArgument)
+        {
+            var optionParts = optionArgument.Replace("-", "").Split(new char[] { '=' }, 2);
+            return (optionParts.First(), optionParts.Count() > 1 ? optionParts.ElementAt(1) : string.Empty);
         }
 
         private Type RetrieveTypeForCommand(string command)

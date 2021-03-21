@@ -11,7 +11,20 @@ namespace CLImber.Tests
 
         public static bool Flag { get; private set; } = false;
 
+        public static bool OtherFlag { get; private set; } = false;
+
         public static string StringOption { get; private set; } = string.Empty;
+
+        public static int IntOption { get; private set; } = 0;
+
+        public DummyCommand()
+        {
+            CallCount = 0;
+            Flag = false;
+            StringOption = string.Empty;
+            IntOption = 0;
+            OtherFlag = false;
+        }
 
         [CommandHandler]
         public void DefaultHandler()
@@ -20,6 +33,7 @@ namespace CLImber.Tests
         }
 
         [CommandOption("flag")]
+        [CommandOption("f")]
         public bool InstanceFlag
         {
             get
@@ -29,6 +43,20 @@ namespace CLImber.Tests
             set
             {
                 Flag = value;
+            }
+        }
+
+        [CommandOption("other")]
+        [CommandOption("o")]
+        public bool InstanceOtherFlag
+        {
+            get
+            {
+                return OtherFlag;
+            }
+            set
+            {
+                OtherFlag = value;
             }
         }
 
@@ -43,6 +71,20 @@ namespace CLImber.Tests
             {
                 StringOption = value;
             }
+        }
+
+        [CommandOption("int")]
+        public int InstanceIntOption
+        {
+            get
+            {
+                return IntOption;
+            }
+            set
+            {
+                IntOption = value;
+            }
+
         }
     }
 
@@ -68,21 +110,31 @@ namespace CLImber.Tests
             string[] arguments = { "test_command" };
             string[] argumentsWithCapitols = { "Test_Command" };
             string[] argumentsWithRandomCapitols = { "TEst_ComManD" };
-            var callCountBefore = DummyCommand.CallCount;
 
             _sut.Handle(arguments);
+            DummyCommand.CallCount.Should().Be(1);
+
             _sut.Handle(argumentsWithCapitols);
+            DummyCommand.CallCount.Should().Be(1);
+
             _sut.Handle(argumentsWithRandomCapitols);
-
-            DummyCommand.CallCount.Should().Be(callCountBefore + 3);
-
+            DummyCommand.CallCount.Should().Be(1);
         }
 
         [Fact]
         public void Handle_ShouldSetBoolProp_WhenOptionIsInArgs()
         {
             string[] arguments = { "test_command" , "--flag" };
-            DummyCommand.Flag.Should().BeFalse();
+
+            _sut.Handle(arguments);
+
+            DummyCommand.Flag.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Handle_ShouldIgnoreCase_WhenSettingOptions()
+        {
+            string[] arguments = { "tEst_ComMand", "--fLaG" };
 
             _sut.Handle(arguments);
 
@@ -93,11 +145,41 @@ namespace CLImber.Tests
         public void Handle_ShouldSetStringProp_WithValueAfterEqualSign()
         {
             string[] arguments = { "test_command", "--stringOption=this is the new value" };
-            DummyCommand.StringOption.Should().BeEquivalentTo(string.Empty);
 
             _sut.Handle(arguments);
 
             DummyCommand.StringOption.Should().BeEquivalentTo("this is the new value");
+        }
+
+        [Fact]
+        public void Handle_ShouldSetIntegerOptions_WhenValidValueIsProvided()
+        {
+            string[] arguments = { "test_command", "--int=17" };
+
+            _sut.Handle(arguments);
+
+            DummyCommand.IntOption.Should().Be(17);
+        }
+
+        [Fact]
+        public void Handle_ShouldSetFlag_WhenAbbreviationsIsUsed()
+        {
+            string[] arguments = { "test_command", "-f" };
+
+            _sut.Handle(arguments);
+
+            DummyCommand.Flag.Should().BeTrue();
+        }
+
+        [Fact]
+        public void Handle_ShouldSetAllShortOptions_WhenAggregated()
+        {
+            string[] arguments = { "test_command", "-fo" };
+
+            _sut.Handle(arguments);
+
+            DummyCommand.Flag.Should().BeTrue();
+            DummyCommand.OtherFlag.Should().BeTrue();
         }
 
     }
