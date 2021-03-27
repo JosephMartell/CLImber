@@ -63,6 +63,7 @@ namespace CLImber
                                  where (attribs.Count() > 0)
                                  from att in attribs
                                  where att.Name.Equals(optionName, StringComparison.OrdinalIgnoreCase)
+                                    || att.Abbreviation.ToString().Equals(optionName, StringComparison.OrdinalIgnoreCase)
                                  select op;
             return selectedOption;
         }

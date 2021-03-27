@@ -5,16 +5,6 @@ using System.Reflection;
 
 namespace CLImber
 {
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple =true, Inherited = false)]
-    public class CommandOptionAttribute
-        : Attribute
-    {
-        public string Name { get; }
-        public CommandOptionAttribute(string name)
-        {
-            Name = name;
-        }
-    }
     public class CLIHandler
     {
         private readonly Dictionary<Type, Func<string, object>> _converterFuncs = new Dictionary<Type, Func<string, object>>();
@@ -74,28 +64,28 @@ namespace CLImber
 
         private void ProcessShortOptions(object commandObject, string option)
         {
-            var optionArg = ParseOptionArgument(option);
-            foreach (var letter in optionArg.Name)
+            var (Name, Value) = ParseOptionArgument(option);
+            foreach (var letter in Name)
             {
                 var optionProperty = AssemblySearcher
                     .GetCommandOptionPropertyByName(
                     commandObject.GetType(),
                     letter.ToString());
 
-                ProcessOption(commandObject, optionProperty.First(), optionArg.Value);
+                ProcessOption(commandObject, optionProperty.First(), Value);
             }
         }
 
         private void ProcessFullOption(object commandObject, string option)
         {
-            var optionArg = ParseOptionArgument(option);
+            var (Name, Value) = ParseOptionArgument(option);
 
             var optionProperty = AssemblySearcher
                 .GetCommandOptionPropertyByName(
                 commandObject.GetType(),
-                optionArg.Name);
+                Name);
 
-            ProcessOption(commandObject, optionProperty.First(), optionArg.Value);
+            ProcessOption(commandObject, optionProperty.First(), Value);
         }
 
         private void ProcessOption(object cmdObject, PropertyInfo propertyInfo, string value)

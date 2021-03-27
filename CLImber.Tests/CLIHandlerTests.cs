@@ -32,8 +32,7 @@ namespace CLImber.Tests
             CallCount++;
         }
 
-        [CommandOption("flag")]
-        [CommandOption("f")]
+        [CommandOption("flag", Abbreviation = 'f')]
         public bool InstanceFlag
         {
             get
@@ -46,8 +45,7 @@ namespace CLImber.Tests
             }
         }
 
-        [CommandOption("other")]
-        [CommandOption("o")]
+        [CommandOption("other", Abbreviation = 'o')]
         public bool InstanceOtherFlag
         {
             get
