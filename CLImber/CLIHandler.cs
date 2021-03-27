@@ -38,12 +38,81 @@ namespace CLImber
             {
                 var commandType = RetrieveTypeForCommand(args.First());
                 object cmd = ConstructCmdType(commandType);
+                SetCommandOptions(cmd, args.Where(a => a.StartsWith("-")));
                 InvokeHandlerMethod(commandType, cmd, args.Skip(1));
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
+        }
+
+        private void SetCommandOptions(object commandObject, IEnumerable<string> passedOptions)
+        {
+            foreach (var option in passedOptions)
+            {
+                if (option.StartsWith("--"))
+                {
+                    ProcessFullOption(commandObject, option);
+                }
+
+                //anything left must be a short option. Could be aggregated short option
+                ProcessShortOptions(commandObject, option);
+                
+            }
+        }
+
+        private void ProcessShortOptions(object commandObject, string option)
+        {
+            var (Name, Value) = ParseOptionArgument(option);
+            foreach (var letter in Name)
+            {
+                var optionProperty = AssemblySearcher
+                    .GetCommandOptionPropertyByName(
+                    commandObject.GetType(),
+                    letter.ToString());
+
+                ProcessOption(commandObject, optionProperty.First(), Value);
+            }
+        }
+
+        private void ProcessFullOption(object commandObject, string option)
+        {
+            var (Name, Value) = ParseOptionArgument(option);
+
+            var optionProperty = AssemblySearcher
+                .GetCommandOptionPropertyByName(
+                commandObject.GetType(),
+                Name);
+
+            ProcessOption(commandObject, optionProperty.First(), Value);
+        }
+
+        private void ProcessOption(object cmdObject, PropertyInfo propertyInfo, string value)
+        {
+            if (propertyInfo.PropertyType == typeof(bool))
+            {
+                propertyInfo.SetValue(cmdObject, true);
+                return;
+            }
+            
+            if (propertyInfo.PropertyType == typeof(string))
+            {
+                propertyInfo.SetValue(cmdObject, value);
+                return;
+            }
+            
+            if (_converterFuncs.ContainsKey(propertyInfo.PropertyType))
+            {
+                propertyInfo.SetValue(cmdObject, _converterFuncs[propertyInfo.PropertyType](value));
+                return;
+            }
+        }
+
+        private (string Name, string Value) ParseOptionArgument(string optionArgument)
+        {
+            var optionParts = optionArgument.Replace("-", "").Split(new char[] { '=' }, 2);
+            return (optionParts.First(), optionParts.Count() > 1 ? optionParts.ElementAt(1) : string.Empty);
         }
 
         private Type RetrieveTypeForCommand(string command)
