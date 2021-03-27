@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CLImber.Example": {
+      "commandName": "Project",
+      "commandLineArgs": "edit \"--name=Updated name\""
+    }
+  }
+}

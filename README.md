@@ -1,4 +1,4 @@
-# CLImber - A Command Line Interface Library
+# CLImber - A Command Line Interface Library [![Build and Test](https://github.com/JosephMartell/CLImber/actions/workflows/BuildAndTest.yml/badge.svg?branch=main)](https://github.com/JosephMartell/CLImber/actions/workflows/BuildAndTest.yml)
 
 ## Introduction
 CLImber is a .Net library aimed at offloading the work of setting up, documenting, and parsing command line arguments. CLImber should allow your code to be smaller and more concisely focused on the actual work at hand rather than the plumbing required to support a robust command line interface.
