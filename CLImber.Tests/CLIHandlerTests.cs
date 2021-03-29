@@ -17,6 +17,8 @@ namespace CLImber.Tests
 
         public static int IntOption { get; private set; } = 0;
 
+        public static string CommandArg { get; private set; } = string.Empty;
+
         public DummyCommand()
         {
             CallCount = 0;
@@ -24,12 +26,20 @@ namespace CLImber.Tests
             StringOption = string.Empty;
             IntOption = 0;
             OtherFlag = false;
+            CommandArg = string.Empty;
         }
 
         [CommandHandler]
         public void DefaultHandler()
         {
             CallCount++;
+        }
+
+        [CommandHandler]
+        public void CommandHandlerWithArgs(string arg1)
+        {
+            CallCount++;
+            CommandArg = arg1;
         }
 
         [CommandOption("flag", Abbreviation = 'f')]
@@ -94,7 +104,6 @@ namespace CLImber.Tests
         public void Handle_ShouldFindClassesInAssembly_WhenDecoratedWithCommandClass()
         {
             string[] arguments = { "test_command" };
-            var callCountBefore = DummyCommand.CallCount;
 
             _sut.Handle(arguments);
 
@@ -191,5 +200,20 @@ namespace CLImber.Tests
             DummyCommand.OtherFlag.Should().BeTrue();
             DummyCommand.CallCount.Should().Be(1);
         }
+
+        [Fact]
+        public void Handle_SetsOptionsAndParsesArgs_WhenBothArePresent()
+        {
+            string[] arguments = { "test_command", "-fo", "--stringOption=someValue", "this is the argument"};
+
+            _sut.Handle(arguments);
+
+            DummyCommand.Flag.Should().BeTrue();
+            DummyCommand.OtherFlag.Should().BeTrue();
+            DummyCommand.StringOption.Should().Be("someValue");
+            DummyCommand.CallCount.Should().Be(1);
+            DummyCommand.CommandArg.Should().Be("this is the argument");
+        }
+
     }
 }
