@@ -39,7 +39,7 @@ namespace CLImber
                 var commandType = RetrieveTypeForCommand(args.First());
                 object cmd = ConstructCmdType(commandType);
                 SetCommandOptions(cmd, args.Where(a => a.StartsWith("-")));
-                InvokeHandlerMethod(commandType, cmd, args.Skip(1));
+                InvokeHandlerMethod(commandType, cmd, args.Skip(1).Where(a => !a.StartsWith("-")));
             }
             catch (Exception ex)
             {

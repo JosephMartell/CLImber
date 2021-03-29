@@ -98,7 +98,7 @@ namespace CLImber.Tests
 
             _sut.Handle(arguments);
 
-            DummyCommand.CallCount.Should().Be(callCountBefore + 1);
+            DummyCommand.CallCount.Should().Be(1);
 
         }
 
@@ -180,5 +180,16 @@ namespace CLImber.Tests
             DummyCommand.OtherFlag.Should().BeTrue();
         }
 
+        [Fact]
+        public void Handle_SetsOptions_WhenSetWithNormalCommand()
+        {
+            string[] arguments = { "test_command", "-fo" };
+
+            _sut.Handle(arguments);
+
+            DummyCommand.Flag.Should().BeTrue();
+            DummyCommand.OtherFlag.Should().BeTrue();
+            DummyCommand.CallCount.Should().Be(1);
+        }
     }
 }

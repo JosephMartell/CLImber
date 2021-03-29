@@ -6,7 +6,7 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/JosephMartell/CLImber</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JosephMartell/CLImber</RepositoryUrl>
-    <Version>0.5.1</Version>
+    <Version>0.5.2</Version>
     <Authors>Joseph Martell</Authors>
     <Description>CLImber is a Command Line Interface library.</Description>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
@@ -14,7 +14,8 @@
     <PackageReleaseNotes>New Features
 - Implements options.
 
-*0.5.1 is being uploaded because 0.5.0 did not make the CommandOptionAttribute class public.</PackageReleaseNotes>
+*0.5.1 is being uploaded because 0.5.0 did not make the CommandOptionAttribute class public.
+*0.5.2 is a bug-fix release. Release 0.5.0 did not properly parse commands seperately from options.</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <PackageId>JM.CLImber</PackageId>
   </PropertyGroup>
