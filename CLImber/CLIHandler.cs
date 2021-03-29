@@ -36,10 +36,13 @@ namespace CLImber
 
             try
             {
-                var commandType = RetrieveTypeForCommand(args.First());
+                string cmdArg = args.First();
+                var options = args.Skip(1).Where(a => a.StartsWith("-"));
+                var cmdArguments = args.Skip(1).Except(options);
+                var commandType = RetrieveTypeForCommand(cmdArg);
                 object cmd = ConstructCmdType(commandType);
-                SetCommandOptions(cmd, args.Where(a => a.StartsWith("-")));
-                InvokeHandlerMethod(commandType, cmd, args.Skip(1).Where(a => !a.StartsWith("-")));
+                SetCommandOptions(cmd, options);
+                InvokeHandlerMethod(cmd, cmdArguments);
             }
             catch (Exception ex)
             {
@@ -54,6 +57,7 @@ namespace CLImber
                 if (option.StartsWith("--"))
                 {
                     ProcessFullOption(commandObject, option);
+                    return;
                 }
 
                 //anything left must be a short option. Could be aggregated short option
@@ -148,9 +152,9 @@ namespace CLImber
             return commandType.GetConstructors().First().Invoke(requiredResources.ToArray());
         }
 
-        private void InvokeHandlerMethod(Type commandType, object cmd, IEnumerable<string> paramArgs)
+        private void InvokeHandlerMethod(object cmd, IEnumerable<string> paramArgs)
         {
-            var possibleHandlerMethods = AssemblySearcher.GetCommandMethods(commandType, paramArgs.Count());
+            var possibleHandlerMethods = AssemblySearcher.GetCommandMethods(cmd.GetType(), paramArgs.Count());
 
             //Temporary exception condition. Eventually we will just try multiple handlers starting with
             //the most specific signatures (the one that requires the most type conversion)
