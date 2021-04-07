@@ -21,8 +21,13 @@ CLImber defines 3 types of command line artifacts. These are inspired by the git
 
 `checkout` is a command. Commands are considered the primary element that actually does work. In this case we know that `checkout` is going to switch our working directory to another branch.
 
-`-b` is an option. Options are used to modify the behavior of commands. `-b` is telling the `checkout` command to create a new branch
-> CLImber does not currently support options. It is included here to make the explanation complete and because it is a planned feature. More details will be provided as that feature nears completion.
+`-b` is an option. Options are used to modify the behavior of commands. `-b` is telling the `checkout` command to create a new branch. Options come in two flavors: full and abbreviated. Full options have mult-character commands. An example of this is setting the username in your git configuration:
+
+`git config --global user.name`
+
+`--global` is a full option. It is dilineated by the double '--' at the beginning. Full options can also take arguments. For the moment, options with arguments must be full arguments, not abbreviated, and must follow the form: `--option=value`. This may change as CLImber evolves, but the current implementation requires this form.
+
+Options also come in abbreviated form. Abbreviated options are preceded by a single '-' character and always use a single character. `-b` is an example of an abbreviated option. Abbreviated options can be convenient becaues they can be combined (or 'aggregated' to use the git nomenclature): `-bxytj` would represent 5 different abbreviated options. At the moment abbreviated options do not support arguments.
 
 `new_branch` is an argument. An argument provides additional information to the command so it can complete a task. This example is providing `checkout` with the name of the branch to create and then checkout.
 
