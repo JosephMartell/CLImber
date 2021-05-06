@@ -1,40 +1,13 @@
 ﻿using System;
-using System.Net;
 namespace CLImber.Example
 {
-    [CommandClass("add")]
+    [CommandClass("add", ShortDescription = "Add numbers together")]
     public class AddCmdHandler
     {
         [CommandHandler]
-        public void AddDHCPProfile(string name)
+        public void AddNumbers(decimal num1, decimal num2)
         {
-            Console.WriteLine("Add DHCP Profile named: " + name);
-
-
-        }
-
-        [CommandHandler]
-        public void AddStaticProfile(string name, System.Net.IPAddress ip, System.Net.IPAddress subnet)
-        {
-            Console.WriteLine("Add static profile with only an ip (" + ip + ") and subnet (" + subnet + ")");
-
-
-        }
-
-        [CommandHandler]
-        public void AddStaticProfile(string name, IPAddress ip, IPAddress subnet, IPAddress gateway)
-        {
-            Console.WriteLine($"Add static profile with ip, subnet, & gw: {ip}, {subnet}, {gateway}");
-
-
-        }
-
-        [CommandHandler]
-        public void AddStaticProfile(string name, IPAddress ip, IPAddress subnet, IPAddress gateway, IPAddress DNS)
-        {
-            Console.WriteLine($"Add static profile with ip, subnet, gw, & DNS: {ip}, {subnet}, {gateway}, {DNS}");
-
-
+            Console.WriteLine($"Answer: {num1 + num2}");
         }
     }
 }
