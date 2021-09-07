@@ -19,6 +19,16 @@ namespace CLImber.Tests
 
         public static string CommandArg { get; private set; } = string.Empty;
 
+        public static void ResetIndicators()
+        {
+            CallCount = 0;
+            Flag = false;
+            OtherFlag = false;
+            StringOption = string.Empty;
+            IntOption = 0;
+            CommandArg = string.Empty;
+        }
+
         public DummyCommand()
         {
             CallCount = 0;
@@ -121,8 +131,12 @@ namespace CLImber.Tests
             _sut.Handle(arguments);
             DummyCommand.CallCount.Should().Be(1);
 
+            DummyCommand.ResetIndicators();
+
             _sut.Handle(argumentsWithCapitols);
             DummyCommand.CallCount.Should().Be(1);
+
+            DummyCommand.ResetIndicators();
 
             _sut.Handle(argumentsWithRandomCapitols);
             DummyCommand.CallCount.Should().Be(1);
@@ -215,5 +229,37 @@ namespace CLImber.Tests
             DummyCommand.CommandArg.Should().Be("this is the argument");
         }
 
+        [Fact]
+        public void Handle_IgnoresTextCase_WhenRequested()
+        {
+            string[] argumentsWithCase = { "test_Command" };
+            string[] argumentsNoCase = { "test_command" };
+            _sut.IgnoreCommandCase = true;
+            
+            _sut.Handle(argumentsNoCase);
+            DummyCommand.CallCount.Should().Be(1);
+
+            DummyCommand.ResetIndicators();
+
+            _sut.Handle(argumentsWithCase);
+            DummyCommand.CallCount.Should().Be(1);
+
+        }
+
+        [Fact]
+        public void Handle_UsesTextCase_WhenRequested()
+        {
+            string[] argumentsWithCase = { "tEst_ComMand" };
+            string[] argumentsNoCase = { "test_command" };
+            _sut.IgnoreCommandCase = false;
+            
+            _sut.Handle(argumentsNoCase);
+            DummyCommand.CallCount.Should().Be(1);
+
+            DummyCommand.ResetIndicators();
+
+            _sut.Handle(argumentsWithCase);
+            DummyCommand.CallCount.Should().Be(0);
+        }
     }
 }

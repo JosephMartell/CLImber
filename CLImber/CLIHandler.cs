@@ -21,8 +21,10 @@ namespace CLImber
             return this;
         }
 
+        public bool IgnoreCommandCase { get; set; }
         public CLIHandler()
         {
+            IgnoreCommandCase = true;
             _converterFuncs[typeof(int)] = (arg) => int.Parse(arg);
         }
 
@@ -121,7 +123,7 @@ namespace CLImber
 
         private Type RetrieveTypeForCommand(string command)
         {
-            var possibleCommandHandlers = AssemblySearcher.GetCommandClasses(command);
+            var possibleCommandHandlers = AssemblySearcher.GetCommandClasses(command, IgnoreCommandCase);
 
             if (possibleCommandHandlers.Count() > 1)
                 throw new Exception($"More than one class assigned to handle command {command}");
