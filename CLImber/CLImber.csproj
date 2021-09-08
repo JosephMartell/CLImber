@@ -6,19 +6,17 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/JosephMartell/CLImber</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JosephMartell/CLImber</RepositoryUrl>
-    <Version>0.5.3</Version>
+    <Version>0.6.0</Version>
     <Authors>Joseph Martell</Authors>
     <Description>CLImber is a Command Line Interface library.</Description>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <PackageTags>CLI, Command Line, terminal, shell</PackageTags>
     <PackageReleaseNotes>New Features
-- Implements options.
-
-*0.5.1 is being uploaded because 0.5.0 did not make the CommandOptionAttribute class public.
-*0.5.2 is a bug-fix release. Release 0.5.0 did not properly parse commands seperately from options.
-*0.5.3 is a bug-fix release. CLImber would not call the proper command handler if an option taking a parameter was included in the command line.</PackageReleaseNotes>
+- Commands can now be case sensitive or not dendending on how CLImber is configured.
+- The way options are handled have been updated. Options are now processed more closely to how Git handles options. Aggregated options can have up to 1 option that takes a value; values can be designated with '=' or can be implied as the next argument in the command (for both abbreviated or full options).</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <PackageId>JM.CLImber</PackageId>
+    <Copyright>Joseph Martell</Copyright>
   </PropertyGroup>
 
 </Project>

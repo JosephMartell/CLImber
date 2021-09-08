@@ -50,9 +50,24 @@ namespace CLImber
         {
             return from method in type.GetMethods()
                    let attributes = method.GetCustomAttributes(typeof(CommandHandlerAttribute), true)
+                   let parms = method.GetParameters()
                    where (attributes != null && attributes.Length > 0)
-                      && (method.GetParameters().Count() == argumentCount)
-                   orderby method.GetParameters().Count() ascending
+                      && (parms.Count() == argumentCount)
+                      && (parms.Where(p => p.ParameterType.ToString().Contains("[]")).Count() == 0)
+                   orderby parms.Count() ascending,
+                           parms.Count(p => p.ParameterType == typeof(string)) ascending
+                   select method;
+        }
+
+        public static IEnumerable<MethodInfo> GetCommandMethodsAcceptingArrays(Type type)
+        {
+            return from method in type.GetMethods()
+                   let attributes = method.GetCustomAttributes(typeof(CommandHandlerAttribute), true)
+                   let parms = method.GetParameters()
+                   where (attributes != null && attributes.Length > 0)
+                      && (parms.Count() > 0)
+                      && (parms.First().ParameterType.ToString().Contains("[]"))
+                   orderby parms.Count(p => p.ParameterType == typeof(string[])) ascending
                    select method;
         }
 

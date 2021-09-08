@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
+
 namespace CLImber
 {
     public class CLIHandler
@@ -29,6 +30,9 @@ namespace CLImber
         {
             IgnoreCommandCase = true;
             _converterFuncs[typeof(int)] = (arg) => int.Parse(arg);
+            _converterFuncs[typeof(float)] = (arg) => float.Parse(arg);
+            _converterFuncs[typeof(double)] = (arg) => double.Parse(arg);
+            _converterFuncs[typeof(decimal)] = (arg) => decimal.Parse(arg);
         }
 
         public void Handle(IEnumerable<string> args)
@@ -49,6 +53,10 @@ namespace CLImber
                 object cmd = ConstructCmdType(commandType);
                 ParseOptions(cmd, argQ);
                 InvokeHandlerMethod(cmd, cmdArguments);
+            }
+            catch (TargetInvocationException tie)
+            {
+                throw tie;
             }
             catch (Exception ex)
             {
@@ -177,17 +185,62 @@ namespace CLImber
             return commandType.GetConstructors().First().Invoke(requiredResources.ToArray());
         }
 
+        //Handler method priority:
+        // 1. Method parameter count exactly matches the supplied arguments
+        //      a. If multiple methods qualify they will be tried in order of fewest string parameters to most
+        // 2. Methods that have arrays as parameters
+        //      a. If multiple methods qualify they will be tried in order of most non-array paremeters to least
+        //      b. Preference will be given to methods with non-string array parameters.
         private void InvokeHandlerMethod(object cmd, IEnumerable<string> paramArgs)
         {
             var possibleHandlerMethods = AssemblySearcher.GetCommandMethods(cmd.GetType(), paramArgs.Count());
 
-            //Temporary exception condition. Eventually we will just try multiple handlers starting with
-            //the most specific signatures (the one that requires the most type conversion)
-            if (possibleHandlerMethods.Count() > 1)
-                throw new Exception("Multiple handlers exist with the same signature. Could not determine which handler to call.");
+            if (possibleHandlerMethods.Count() > 0)
+            {
+                foreach (var possibleHandlerMethod in possibleHandlerMethods)
+                {
+                    //TODO: Do ANYTHING else besides swallowing the exception
+                    try
+                    {
+                        List<object> convertedParamList = ConvertParams(possibleHandlerMethod.GetParameters(), paramArgs);
+                        possibleHandlerMethod.Invoke(cmd, convertedParamList.ToArray());
+                        return;
+                    }
+                    catch
+                    {
+
+                    }
+                }
+            }
+
 
             if (possibleHandlerMethods.Count() < 1)
+            {
+                var arrayHandlers = AssemblySearcher.GetCommandMethodsAcceptingArrays(cmd.GetType());
+                if (arrayHandlers.Count() >= 1)
+                {
+                    foreach (var arrayHandler in arrayHandlers)
+                    {
+                        //TODO: Do ANYTHING else besides swallowing the exception
+                        try
+                        {
+                            var nonArrayType = Type.GetType(arrayHandler.GetParameters().First().ParameterType.FullName.Replace("[]", ""));
+
+                            Array typedArray = Array.CreateInstance(nonArrayType, paramArgs.Count());
+                            for (int i = 0; i < paramArgs.Count(); i++)
+                            {
+                                typedArray.SetValue(ConvertParam(paramArgs.ElementAt(i), nonArrayType), i);
+                            }
+                            arrayHandler.Invoke(cmd, new object[] { typedArray });
+                            return;
+                        }
+                        catch
+                        {
+                        }
+                    }
+                }
                 throw new Exception("No handler was found for the given arguments.");
+            }
 
             var handlerMethod = possibleHandlerMethods.First();
 
