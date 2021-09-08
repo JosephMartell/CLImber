@@ -78,7 +78,7 @@ namespace CLImber.Tests
             }
         }
 
-        [CommandOption("stringOption")]
+        [CommandOption("stringOption", Abbreviation = 's')]
         public string InstanceStringOption
         {
             get
@@ -91,7 +91,7 @@ namespace CLImber.Tests
             }
         }
 
-        [CommandOption("int")]
+        [CommandOption("int", Abbreviation = 'i')]
         public int InstanceIntOption
         {
             get
@@ -259,6 +259,40 @@ namespace CLImber.Tests
             DummyCommand.ResetIndicators();
 
             _sut.Handle(argumentsWithCase);
+            DummyCommand.CallCount.Should().Be(0);
+        }
+
+        [Fact]
+        public void Handle_SetsOptionValue_ForAbbreviatedOptions()
+        {
+            string[] arguments = { "test_command", "-s=someValue" };
+            _sut.Handle(arguments);
+            DummyCommand.StringOption.Should().BeEquivalentTo("someValue");
+
+        }
+
+        [Fact]
+        public void Handle_SetsOptionValue_WhenValueIsNextArgument()
+        {
+            string[] arguments = { "test_command", "-s", "someValue" };
+            _sut.Handle(arguments);
+            DummyCommand.StringOption.Should().BeEquivalentTo("someValue");
+
+        }
+        [Fact]
+        public void Handle_SetsOptionValue_WhenValueIsPartOfAggregateGroup()
+        {
+            string[] arguments = { "test_command", "-fs", "someValue" };
+            _sut.Handle(arguments);
+            DummyCommand.Flag.Should().BeTrue();
+            DummyCommand.StringOption.Should().BeEquivalentTo("someValue");
+        }
+
+        [Fact]
+        public void Handle_ShouldNotRun_WhenMultipleAggregatesNeedValues()
+        {
+            string[] arguments = { "test_command", "-fsi", "someValue", "5" };
+            _sut.Handle(arguments);
             DummyCommand.CallCount.Should().Be(0);
         }
     }

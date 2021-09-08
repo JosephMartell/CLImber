@@ -8,6 +8,7 @@ namespace CLImber
     public class CLIHandler
     {
         private readonly Dictionary<Type, Func<string, object>> _converterFuncs = new Dictionary<Type, Func<string, object>>();
+
         public CLIHandler RegisterTypeConverter<T>(Func<string, object> converterFunc)
         {
             _converterFuncs[typeof(T)] = converterFunc;
@@ -15,6 +16,7 @@ namespace CLImber
         }
 
         private readonly Dictionary<Type, object> _resources = new Dictionary<Type, object>();
+
         public CLIHandler RegisterResource<T>(T resource)
         {
             _resources[typeof(T)] = resource;
@@ -22,6 +24,7 @@ namespace CLImber
         }
 
         public bool IgnoreCommandCase { get; set; }
+
         public CLIHandler()
         {
             IgnoreCommandCase = true;
@@ -38,12 +41,13 @@ namespace CLImber
 
             try
             {
-                string cmdArg = args.First();
+                var argQ = new Queue<string>(args);
+                string cmdArg = argQ.Dequeue();
                 var options = args.Skip(1).Where(a => a.StartsWith("-"));
                 var cmdArguments = args.Skip(1).Except(options);
                 var commandType = RetrieveTypeForCommand(cmdArg);
                 object cmd = ConstructCmdType(commandType);
-                SetCommandOptions(cmd, options);
+                ParseOptions(cmd, argQ);
                 InvokeHandlerMethod(cmd, cmdArguments);
             }
             catch (Exception ex)
@@ -52,73 +56,92 @@ namespace CLImber
             }
         }
 
-        private void SetCommandOptions(object commandObject, IEnumerable<string> passedOptions)
+        private void ParseOptions(object commandObject, Queue<string> argQ)
         {
-            foreach (var option in passedOptions)
+            var passedOptions = new Queue<string>();
+            while (argQ.Count > 0)
             {
-                if (option.StartsWith("--"))
+                string arg = argQ.Dequeue();
+                if (arg.StartsWith("-"))
                 {
-                    ProcessFullOption(commandObject, option);
-                    return;
-                }
+                    string options = arg;
+                    string value = null;
+                    if (arg.Contains("="))
+                    {
+                        var parts = arg.Split(new char[] { '=' }, 2);
+                        options = parts[0];
+                        value = parts[1];
+                    }
 
-                //anything left must be a short option. Could be aggregated short option
-                ProcessShortOptions(commandObject, option);
-                
+                    if (options.StartsWith("--"))
+                    {
+                        SetFullOption(commandObject, argQ, options, value);
+                    }
+                    else if (options.StartsWith("-"))
+                    {
+                        SetAggregatedOptions(commandObject, argQ, options, value);
+                    }
+                }
+                else
+                {
+                    passedOptions.Enqueue(arg);
+                }
             }
         }
 
-        private void ProcessShortOptions(object commandObject, string option)
+        private void SetFullOption(object commandObject, Queue<string> argQ, string options, string value)
         {
-            var (Name, Value) = ParseOptionArgument(option);
-            foreach (var letter in Name)
+            var optionProperty = AssemblySearcher
+                    .GetCommandOptionPropertyByName(
+                        commandObject.GetType(),
+                        options.Substring(2)).First();
+
+            if (optionProperty.PropertyType == typeof(bool))
+            {
+                optionProperty.SetValue(commandObject, true);
+            }
+            else if (optionProperty.PropertyType == typeof(string))
+            {
+                optionProperty.SetValue(commandObject, value ?? argQ.Dequeue());
+            }
+            else if (_converterFuncs.ContainsKey(optionProperty.PropertyType))
+            {
+                optionProperty.SetValue(commandObject, _converterFuncs[optionProperty.PropertyType](value ?? argQ.Dequeue()));
+            }
+        }
+
+        private void SetAggregatedOptions(object commandObject, Queue<string> argQ, string options, string value)
+        {
+            var argsRequired = 0;
+            options = options.Substring(1);
+            foreach (var option in options)
             {
                 var optionProperty = AssemblySearcher
-                    .GetCommandOptionPropertyByName(
-                    commandObject.GetType(),
-                    letter.ToString());
+                        .GetCommandOptionPropertyByName(
+                            commandObject.GetType(),
+                            option.ToString()).First();
 
-                ProcessOption(commandObject, optionProperty.First(), Value);
+                if (optionProperty.PropertyType == typeof(bool))
+                {
+                    optionProperty.SetValue(commandObject, true);
+                }
+                else if (optionProperty.PropertyType == typeof(string))
+                {
+                    optionProperty.SetValue(commandObject, value ?? argQ.Dequeue());
+                    argsRequired++;
+                }
+                else if (_converterFuncs.ContainsKey(optionProperty.PropertyType))
+                {
+                    optionProperty.SetValue(commandObject, _converterFuncs[optionProperty.PropertyType](value ?? argQ.Dequeue()));
+                    argsRequired++;
+                }
+
+                if (argsRequired > 1)
+                {
+                    throw new ArgumentException("Aggregated options can only contain a single option that requires a value. Multiple were present.");
+                }
             }
-        }
 
-        private void ProcessFullOption(object commandObject, string option)
-        {
-            var (Name, Value) = ParseOptionArgument(option);
-
-            var optionProperty = AssemblySearcher
-                .GetCommandOptionPropertyByName(
-                commandObject.GetType(),
-                Name);
-
-            ProcessOption(commandObject, optionProperty.First(), Value);
-        }
-
-        private void ProcessOption(object cmdObject, PropertyInfo propertyInfo, string value)
-        {
-            if (propertyInfo.PropertyType == typeof(bool))
-            {
-                propertyInfo.SetValue(cmdObject, true);
-                return;
-            }
-            
-            if (propertyInfo.PropertyType == typeof(string))
-            {
-                propertyInfo.SetValue(cmdObject, value);
-                return;
-            }
-            
-            if (_converterFuncs.ContainsKey(propertyInfo.PropertyType))
-            {
-                propertyInfo.SetValue(cmdObject, _converterFuncs[propertyInfo.PropertyType](value));
-                return;
-            }
-        }
-
-        private (string Name, string Value) ParseOptionArgument(string optionArgument)
-        {
-            var optionParts = optionArgument.Replace("-", "").Split(new char[] { '=' }, 2);
-            return (optionParts.First(), optionParts.Count() > 1 ? optionParts.ElementAt(1) : string.Empty);
         }
 
         private Type RetrieveTypeForCommand(string command)

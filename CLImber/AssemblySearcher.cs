@@ -56,14 +56,14 @@ namespace CLImber
                    select method;
         }
 
-        public static IEnumerable<PropertyInfo> GetCommandOptionPropertyByName(Type type, string optionName, bool ignoreCase = true)
+        public static IEnumerable<PropertyInfo> GetCommandOptionPropertyByName(Type type, string optionName)
         {
             var selectedOption = from op in type.GetProperties()
                                  let attribs = op.GetCustomAttributes<CommandOptionAttribute>()
                                  where (attribs.Count() > 0)
                                  from att in attribs
-                                 where att.Name.Equals(optionName, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
-                                    || att.Abbreviation.ToString().Equals(optionName, StringComparison.OrdinalIgnoreCase)
+                                 where att.Name.Equals(optionName, StringComparison.CurrentCultureIgnoreCase )
+                                    || att.Abbreviation.ToString().Equals(optionName, StringComparison.CurrentCultureIgnoreCase)
                                  select op;
             return selectedOption;
         }
