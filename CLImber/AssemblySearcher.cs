@@ -18,15 +18,15 @@ namespace CLImber
             return cmdTypes;
         }
 
-        public static IEnumerable<Type> GetCommandClasses(string desiredCommand)
+        public static IEnumerable<Type> GetCommandClasses(string desiredCommand, bool ignoreCase = true)
         {
             var cmdTypes =
                 from a in AppDomain.CurrentDomain.GetAssemblies()
                 from t in a.GetTypes()
                 let attributes = t.GetCustomAttributes(typeof(CommandClassAttribute), true).Cast<CommandClassAttribute>()
-                from attribute in attributes.Cast<CommandClassAttribute>()
+                from attribute in attributes
                 where attributes != null && attributes.Count() > 0
-                  && attribute.CommandName.Equals(desiredCommand, StringComparison.OrdinalIgnoreCase)
+                  && attribute.CommandName.Equals(desiredCommand, ignoreCase ? StringComparison.CurrentCultureIgnoreCase : StringComparison.CurrentCulture)
                 select t;
 
             return cmdTypes;
@@ -62,8 +62,8 @@ namespace CLImber
                                  let attribs = op.GetCustomAttributes<CommandOptionAttribute>()
                                  where (attribs.Count() > 0)
                                  from att in attribs
-                                 where att.Name.Equals(optionName, StringComparison.OrdinalIgnoreCase)
-                                    || att.Abbreviation.ToString().Equals(optionName, StringComparison.OrdinalIgnoreCase)
+                                 where att.Name.Equals(optionName, StringComparison.CurrentCultureIgnoreCase )
+                                    || att.Abbreviation.ToString().Equals(optionName, StringComparison.CurrentCultureIgnoreCase)
                                  select op;
             return selectedOption;
         }
