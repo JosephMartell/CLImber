@@ -19,18 +19,17 @@ CLImber defines 3 types of command line artifacts. These are inspired by the git
 
 `git checkout -b new_branch`
 
-`checkout` is a command. Commands are considered the primary element that actually does work. In this case we know that `checkout` is going to switch our working directory to another branch.
+`checkout` is a command. Commands are considered the primary element of work. In this case we know that `checkout` is going to switch our working directory to another branch.
 
 `-b` is an option. Options are used to modify the behavior of commands. `-b` is telling the `checkout` command to create a new branch. Options come in two flavors: full and abbreviated. Full options have mult-character commands. An example of this is setting the username in your git configuration:
 
 `git config --global user.name`
 
-`--global` is a full option. It is dilineated by the double '--' at the beginning. Full options can also take arguments. For the moment, options with arguments must be full arguments, not abbreviated, and must follow the form: `--option=value`. This may change as CLImber evolves, but the current implementation requires this form.
+`--global` is a full option. It is dilineated by '--' at the beginning. Full options can also take arguments. Options other than boolean are expected to take a value. The value can be designated following an equal sign: `--intOption=7` or values can be supplied as the next argument in the command line: `--intOption 7`.
 
-Options also come in abbreviated form. Abbreviated options are preceded by a single '-' character and always use a single character. `-b` is an example of an abbreviated option. Abbreviated options can be convenient becaues they can be combined (or 'aggregated' to use the git nomenclature): `-bxytj` would represent 5 different abbreviated options. At the moment abbreviated options do not support arguments.
+Options can also be entered in abbreviated form. Abbreviated options are preceded by a single '-' character and always use a single character. `-b` is an example of an abbreviated option. Abbreviated options can be convenient becaues they can be combined (or 'aggregated' to use the git nomenclature): `-bxytj` would represent 5 different abbreviated options. Abbreviated options can have a value provided the same way that full options can. However, when aggregating options only one option per group can take a value. Other options that require a value must be seperated: `incorrect: -abcd 7 foo` (assuming both c and d require values). `correct: -abc 7 -d foo`
 
 `new_branch` is an argument. An argument provides additional information to the command so it can complete a task. This example is providing `checkout` with the name of the branch to create and then checkout.
-
 
 ## Implementation
 So how would you tell CLImber about a checkout command? CLImber uses reflection to examine your code and find classes and their members that you have designated as commands. You have to provide the command string when you decorate your class with the `CommandClass` attribute.
@@ -61,7 +60,7 @@ static void Main(string[] args)
 
 ```
 
-CLImber then examines the assembly to find the `CommandClass` class with the correct command string. It then finds the methods in that class that have been decorated with the `CommandHandler` attribute. If there are multiple then CLImber will pick the method that has the correct number of arguments. If any arguments require conversion CLImber will convert them and then construct the class and invoke the method, passing all arguments. This means that your methods can use strongly typed arguments instead of having to convert from strings as the first step.
+CLImber then examines the assembly to find the class decorated with `CommandClass` with the correct command string. It then finds the methods in that class that have been decorated with the `CommandHandler` attribute. If there are multiple then CLImber will pick the method that has the correct number of arguments. If any arguments require conversion CLImber will convert them (based on user provided converters), construct the class, and invoke the method passing all arguments. This means that your methods can use strongly typed arguments instead of having to convert from strings as the first step.
 
 With simple attributes and a little bit of reflection CLImber handles the discovery of commands and the methods to call to make sure everything is handled correctly. Your project code remains cleaner and focused on achieving the operational goals.
 
