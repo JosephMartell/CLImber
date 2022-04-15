@@ -21,15 +21,15 @@ CLImber defines 3 types of command line artifacts. These are inspired by the git
 
 `checkout` is a command. Commands are considered the primary element that actually does work. In this case we know that `checkout` is going to switch our working directory to another branch.
 
-`-b` is an option. Options are used to modify the behavior of commands. `-b` is telling the `checkout` command to create a new branch
-> CLImber does not currently support options. It is included here to make the explanation complete and because it is a planned feature. More details will be provided as that feature nears completion.
+`-b` is an option. Options are used to modify the behavior of commands. `-b` is telling the `checkout` command to create a new branch.
 
 `new_branch` is an argument. An argument provides additional information to the command so it can complete a task. This example is providing `checkout` with the name of the branch to create and then checkout.
 
 
 ## Implementation
-So how would you tell CLImber about a checkout command? CLImber uses reflection to examine your code and find classes and their members that you have designated as commands. You have to provide the command string when you decorate your class with the `CommandClass` attribute.
+CLImber maps each of the command line arguments to specific code elements. Commands map to classes; Options map to properties; and arguments map to method parameters;
 
+The following is an example of a class that would handle the `checkout` command detailed previously:
 ```c#
 using CLImber;
 
@@ -38,6 +38,9 @@ namespace CLImber.Example
     [CommandClass("checkout")]
     public class CheckoutCommand
     {
+        [CommandOption("new-branch", Abbreviation='b']
+        public bool NewBranch { get; set; }
+        
         [CommandHandler]
         public void Checkout(string branchName)
         {
@@ -46,7 +49,44 @@ namespace CLImber.Example
     }
 }
 ```
-CLImber can then be invoked at your Main method:
+
+### Register the `checkout` command with CLImber
+At runtime, CLImber uses reflection to scan the codebase and find all classes decorated with the `CommandClass` attribute. In our code example we have decorated our CheckoutCommand class with the `CommandClass` attribute and an "checkout" argument. This argument determines the expected string on the command line that CLImber will use to invoke this command.
+```c#
+    ...
+    [CommandClass("checkout")]
+    public class CheckoutCommand
+    {
+    ...
+```
+### Create the new-branch option
+The git checkout command accepts an option to create a new branch instead of switching to an existing branch. To implement this in CLImber we create an attribute in our CheckoutCommand class:
+
+```c#
+    ...
+        [CommandOption("new-branch", Abbreviation='b']
+        public bool NewBranch { get; set; }
+    ...
+```
+By decorating our property with the `CommandOption` attribute CLImber will recognize that this property is an option. The first argument is the full option name which would be invoked by using `--new-branch ` on the command line. The `Abbreviation` parameter designates the character used to invoke this option using abbreviated syntax. On the command line this would look like: `-b`.
+
+### Create the command handler method
+We have already flagged the `CheckoutCommand` class as representing the `checkout` command. But we haven't told CLImber that we are expecting a single string argument to be provided when the `checkout` command is invoked. To do this we add a `CommandHandler` method to our class like this:
+
+```c#
+    ...
+        [CommandHandler]
+        public void Checkout(string branchName)
+        {
+            ///Do the actual work here.
+        }
+    ...
+```
+When the `checkout` command is invoked CLImber will scan the `CheckoutCommand` class for `CommandHandler` methods. Assuming a branch name was provided CLImber will find all `CommandHandler` methods that accept 1 argument and then try to invoke those methods. In this case because our Checkout method accepts a single string argument CLImber would pass the branch name provided by the user. 
+
+
+### Let CLImber Handle your CLI
+Now that we've created this class and properly designated the options and handler methods all that is left to do is tell our program that CLImber needs to handle our CLI arguments. In its simplest form:
 
 ```c#
 static void Main(string[] args)
@@ -56,8 +96,7 @@ static void Main(string[] args)
 
 ```
 
-CLImber then examines the assembly to find the `CommandClass` class with the correct command string. It then finds the methods in that class that have been decorated with the `CommandHandler` attribute. If there are multiple then CLImber will pick the method that has the correct number of arguments. If any arguments require conversion CLImber will convert them and then construct the class and invoke the method, passing all arguments. This means that your methods can use strongly typed arguments instead of having to convert from strings as the first step.
+## Summary
+This is a simple example of implementing a command using CLImber, but CLImber can do more. Methods can have arguments other than `string` and CLImber will attempt to convert to the appropriate type. Arrays can be used in Handler methods to handle any number of arguments. CLImber also includes a rudimentary dependency injection system. CLImber can also enumerate commands, options, and arguments so createing relevant on-screen help is simpler too.  Documentation for all these features will be available in the wiki, as soon as possible.
 
 With simple attributes and a little bit of reflection CLImber handles the discovery of commands and the methods to call to make sure everything is handled correctly. Your project code remains cleaner and focused on achieving the operational goals.
-
-The list of type converters that CLImber is aware of can be extended so you can deal with any classes that are particular to your libraries. CLImber even supports rudimentary dependency injection so you don't have to have a bunch of global resources in your project either.
