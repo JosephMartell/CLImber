@@ -56,7 +56,7 @@ namespace CLImber
             }
             catch (TargetInvocationException tie)
             {
-                throw tie;
+                throw tie.InnerException;
             }
             catch (Exception ex)
             {

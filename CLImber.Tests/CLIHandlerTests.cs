@@ -361,7 +361,7 @@ namespace CLImber.Tests
             string[] arguments = { "test_command", "5", "7" };
 
             _sut.Invoking(y => y.Handle(arguments))
-                .Should().Throw<System.Exception>();
+                .Should().Throw<System.Exception>().Where(e => e.GetType() != typeof(System.Reflection.TargetInvocationException));
         }
 
         [Fact]
