@@ -51,7 +51,7 @@ namespace CLImber.Example
 ```
 
 ### Register the `checkout` command with CLImber
-At runtime, CLImber uses reflection to scan the codebase and find all classes decorated with the `CommandClass` attribute. In our code example we have decorated our CheckoutCommand class with the `CommandClass` attribute and an "checkout" argument. This argument determines the expected string on the command line that CLImber will use to invoke this command.
+At runtime, CLImber uses reflection to scan the codebase and find all classes decorated with the `CommandClass` attribute. In our code example we have decorated our CheckoutCommand class with the `CommandClass` attribute and provided a "checkout" argument. This argument determines the name of the command that CLImber will associate with this class.
 ```c#
     ...
     [CommandClass("checkout")]
@@ -60,7 +60,7 @@ At runtime, CLImber uses reflection to scan the codebase and find all classes de
     ...
 ```
 ### Create the new-branch option
-The git checkout command accepts an option to create a new branch instead of switching to an existing branch. To implement this in CLImber we create an attribute in our CheckoutCommand class:
+The git checkout command accepts an option to create a new branch instead of switching to an existing branch. To implement this in CLImber we create a property in our CheckoutCommand class:
 
 ```c#
     ...
@@ -68,7 +68,7 @@ The git checkout command accepts an option to create a new branch instead of swi
         public bool NewBranch { get; set; }
     ...
 ```
-By decorating our property with the `CommandOption` attribute CLImber will recognize that this property is an option. The first argument is the full option name which would be invoked by using `--new-branch ` on the command line. The `Abbreviation` parameter designates the character used to invoke this option using abbreviated syntax. On the command line this would look like: `-b`.
+By decorating our property with the `CommandOption` attribute CLImber will recognize that this property is an option for the checkout command. The first argument is the full option name which would be invoked by using `--new-branch ` on the command line. The `Abbreviation` parameter designates the character used to invoke this option using abbreviated syntax. On the command line this would look like: `-b`.
 
 ### Create the command handler method
 We have already flagged the `CheckoutCommand` class as representing the `checkout` command. But we haven't told CLImber that we are expecting a single string argument to be provided when the `checkout` command is invoked. To do this we add a `CommandHandler` method to our class like this:
