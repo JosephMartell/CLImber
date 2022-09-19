@@ -3,9 +3,12 @@ using System.Linq;
 
 namespace CLImber.Example
 {
-    [CommandClass("add d", ShortDescription = "Add numbers together")]
-    public class Add
+    [CommandClass("add", ShortDescription = "Add numbers together")]
+    internal class Add
     {
+        [CommandOption("round", Abbreviation = 'r', Description = "If true, round answers to nearest whole number.")]
+        public bool RoundAnswer { get; set; }
+
         [CommandHandler]
         public void AddNumbers(decimal[] numbers)
         {
@@ -13,4 +16,3 @@ namespace CLImber.Example
         }
     }
 }
-    

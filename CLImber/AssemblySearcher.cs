@@ -71,6 +71,17 @@ namespace CLImber
                    select method;
         }
 
+        public static IEnumerable<PropertyInfo> GetCommandOptions(Type type)
+        {
+            var selectedOptions = from op in type.GetProperties()
+                                 let attribs = op.GetCustomAttributes<CommandOptionAttribute>()
+                                 where (attribs.Count() > 0)
+                                 from att in attribs
+                                 select op;
+
+            return selectedOptions;
+
+        }
         public static IEnumerable<PropertyInfo> GetCommandOptionPropertyByName(Type type, string optionName)
         {
             var selectedOption = from op in type.GetProperties()

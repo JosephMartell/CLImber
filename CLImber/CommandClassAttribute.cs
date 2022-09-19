@@ -3,7 +3,7 @@
 namespace CLImber
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-    public class CommandClassAttribute
+    public sealed class CommandClassAttribute
         : System.Attribute
     {
         public string ShortDescription { get; set; }
