@@ -149,7 +149,6 @@ namespace CLImber
                 return lines;
             }
 
-            int i = 1;
             string line = string.Empty;
             while (text.Length > width)
             {
