@@ -6,12 +6,12 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/JosephMartell/CLImber</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JosephMartell/CLImber</RepositoryUrl>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Joseph Martell</Authors>
     <Description>CLImber is a Command Line Interface library.</Description>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <PackageTags>CLI, Command Line, terminal, shell</PackageTags>
-    <PackageReleaseNotes>Includes significant udpates to allow better descriptions via attributes and does a more complete job of automatically generating command line documentation.</PackageReleaseNotes>
+    <PackageReleaseNotes>Bug fix: now accepts arguments with duplicate values.</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <PackageId>JM.CLImber</PackageId>
     <Copyright>Joseph Martell</Copyright>
