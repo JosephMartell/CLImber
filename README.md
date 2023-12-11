@@ -19,12 +19,17 @@ CLImber defines 3 types of command line artifacts. These are inspired by the git
 
 `git checkout -b new_branch`
 
-`checkout` is a command. Commands are considered the primary element that actually does work. In this case we know that `checkout` is going to switch our working directory to another branch.
+`checkout` is a command. Commands are considered the primary element of work. In this case we know that `checkout` is going to switch our working directory to another branch.
 
 `-b` is an option. Options are used to modify the behavior of commands. `-b` is telling the `checkout` command to create a new branch.
 
-`new_branch` is an argument. An argument provides additional information to the command so it can complete a task. This example is providing `checkout` with the name of the branch to create and then checkout.
+`git config --global user.name`
 
+`--global` is a full option. It is dilineated by '--' at the beginning. Full options can also take arguments. Options other than boolean are expected to take a value. The value can be designated following an equal sign: `--intOption=7` or values can be supplied as the next argument in the command line: `--intOption 7`.
+
+Options can also be entered in abbreviated form. Abbreviated options are preceded by a single '-' character and always use a single character. `-b` is an example of an abbreviated option. Abbreviated options can be convenient becaues they can be combined (or 'aggregated' to use the git nomenclature): `-bxytj` would represent 5 different abbreviated options. Abbreviated options can have a value provided the same way that full options can. However, when aggregating options only one option per group can take a value. Other options that require a value must be seperated: `incorrect: -abcd 7 foo` (assuming both c and d require values). `correct: -abc 7 -d foo`
+
+`new_branch` is an argument. An argument provides additional information to the command so it can complete a task. This example is providing `checkout` with the name of the branch to create and then checkout.
 
 ## Implementation
 CLImber maps each of the command line arguments to specific code elements. Commands map to classes; Options map to properties; and arguments map to method parameters;
