@@ -1,3 +1,4 @@
+using System;
 using FluentAssertions;
 using Xunit;
 
@@ -41,6 +42,7 @@ namespace CLImber.Tests
         public static string[] CommandArgs { get; set; } = new string[0];
 
         public static decimal[] OverloadedArgs { get; private set; } = new decimal[0];
+        public static int Total { get; set; }
 
         public static void ResetIndicators()
         {
@@ -153,6 +155,12 @@ namespace CLImber.Tests
         public void ThrowsException(int a, int b)
         {
             throw new System.Exception("Test exception");
+        }
+
+        [CommandHandler]
+        public void MultipleInts(int a, int b, int c)
+        {
+            Total = a + b + c;
         }
     }
 
@@ -390,13 +398,22 @@ namespace CLImber.Tests
         [Fact]
         public void Handle_WorksWithOverloadedArrayMethods()
         {
-            string[] arguments = { "test_command", "5", "7", "87.6" };
+            string[] arguments = { "test_command", "5", "7", "87.6", "111.111" };
 
             _sut.Invoking(y => y.Handle(arguments))
                 .Should().NotThrow();
-            DummyCommand.OverloadedArgs.Length.Should().Be(3);
+            DummyCommand.OverloadedArgs.Length.Should().Be(4);
 
         }
 
+        [Fact]
+        public void Handle_ParsesIntegerArguments_WhenMultipleAreZero()
+        {
+            string[] arguments = { "test_command", "0", "0", "0" };
+            DummyCommand.Total = -1;
+            _sut.Handle(arguments);
+            DummyCommand.Total.Should().Be(0);
+
+        }
     }
 }

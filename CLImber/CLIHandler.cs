@@ -82,7 +82,7 @@ namespace CLImber
                 var argQ = new Queue<string>(args);
                 string cmdArg = argQ.Dequeue();
                 var options = args.Skip(1).Where(a => a.StartsWith("-"));
-                var cmdArguments = args.Skip(1).Except(options);
+                var cmdArguments = args.Skip(1).Where(a => !options.Contains(a));
                 var commandType = RetrieveTypeForCommand(cmdArg);
                 object cmd = ConstructCmdType(commandType);
                 ParseOptions(cmd, argQ);
