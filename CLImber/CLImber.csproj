@@ -2,18 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/JosephMartell/CLImber</PackageProjectUrl>
     <RepositoryUrl>https://github.com/JosephMartell/CLImber</RepositoryUrl>
-    <Version>0.6.0</Version>
+    <Version>1.0.0</Version>
     <Authors>Joseph Martell</Authors>
     <Description>CLImber is a Command Line Interface library.</Description>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <PackageTags>CLI, Command Line, terminal, shell</PackageTags>
-    <PackageReleaseNotes>New Features
-- Commands can now be case sensitive or not dendending on how CLImber is configured.
-- The way options are handled have been updated. Options are now processed more closely to how Git handles options. Aggregated options can have up to 1 option that takes a value; values can be designated with '=' or can be implied as the next argument in the command (for both abbreviated or full options).</PackageReleaseNotes>
+    <PackageReleaseNotes>Includes significant udpates to allow better descriptions via attributes and does a more complete job of automatically generating command line documentation.</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <PackageId>JM.CLImber</PackageId>
     <Copyright>Joseph Martell</Copyright>

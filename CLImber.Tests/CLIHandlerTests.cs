@@ -1,8 +1,26 @@
+using System;
 using FluentAssertions;
 using Xunit;
 
 namespace CLImber.Tests
 {
+    [CommandClass("decimal_command")]
+    public class DecimalDummyCmd
+    {
+        public static decimal[] _args;
+
+        public static void ResetIndicators()
+        {
+            _args = null;
+        }
+
+        [CommandHandler]
+        public void ConvertToDecimalArray(decimal[] args)
+        {
+            _args = args;
+        }
+
+    }
 
     [CommandClass("test_command")]
     public class DummyCommand
@@ -19,6 +37,13 @@ namespace CLImber.Tests
 
         public static string CommandArg { get; private set; } = string.Empty;
 
+        public static int OverloadCmdArg { get; private set; } = 0;
+
+        public static string[] CommandArgs { get; set; } = new string[0];
+
+        public static decimal[] OverloadedArgs { get; private set; } = new decimal[0];
+        public static int Total { get; set; }
+
         public static void ResetIndicators()
         {
             CallCount = 0;
@@ -27,6 +52,9 @@ namespace CLImber.Tests
             StringOption = string.Empty;
             IntOption = 0;
             CommandArg = string.Empty;
+            OverloadCmdArg = 0;
+            CommandArgs = new string[0];
+            OverloadedArgs = new decimal[0];
         }
 
         public DummyCommand()
@@ -50,6 +78,12 @@ namespace CLImber.Tests
         {
             CallCount++;
             CommandArg = arg1;
+        }
+
+        [CommandHandler]
+        public void OverloadHandler(int arg1)
+        {
+            OverloadCmdArg = arg1;
         }
 
         [CommandOption("flag", Abbreviation = 'f')]
@@ -103,6 +137,30 @@ namespace CLImber.Tests
                 IntOption = value;
             }
 
+        }
+
+        [CommandHandler]
+        public void StringArrayHandler(string[] args)
+        {
+            CommandArgs = args;
+        }
+
+        [CommandHandler]
+        public void OverloadedArrayHanlder(decimal[] args)
+        {
+            OverloadedArgs = args;
+        }
+
+        [CommandHandler]
+        public void ThrowsException(int a, int b)
+        {
+            throw new System.Exception("Test exception");
+        }
+
+        [CommandHandler]
+        public void MultipleInts(int a, int b, int c)
+        {
+            Total = a + b + c;
         }
     }
 
@@ -294,6 +352,68 @@ namespace CLImber.Tests
             string[] arguments = { "test_command", "-fsi", "someValue", "5" };
             _sut.Handle(arguments);
             DummyCommand.CallCount.Should().Be(0);
+        }
+
+        [Fact]
+        public void Handle_PassesNArguments_WhenHandlerAcceptsArray()
+        {
+            string[] arguments = { "test_command", "arg1", "arg2", "arg3", "arg4" };
+
+            _sut.Handle(arguments);
+            DummyCommand.CommandArgs.Should().HaveCount(4);
+        }
+
+        [Fact]
+        public void Handle_PropagatesExceptions_WhenThrownInInvokedMethod()
+        {
+            string[] arguments = { "test_command", "5", "7" };
+
+            _sut.Invoking(y => y.Handle(arguments))
+                .Should().Throw<System.Exception>().Where(e => e.GetType() != typeof(System.Reflection.TargetInvocationException));
+        }
+
+        [Fact]
+        public void Handle_ConvertsToDecimalArray_WhenCalled()
+        {
+            string[] arguments = { "decimal_command", "5", "7", "87.6" };
+
+            _sut.Invoking(y => y.Handle(arguments))
+                .Should().NotThrow();
+            DecimalDummyCmd._args.Length.Should().Be(3);
+
+        }
+    
+        [Fact]
+        public void Handle_ChoosesOverloadedHandlers_BasedOnSuppliedType()
+        {
+            string[] arguments = { "test_command", "this is the argument" };
+            _sut.Handle(arguments);
+            DummyCommand.CommandArg.Should().Be("this is the argument");
+
+            string[] olArguments = { "test_command", "5" };
+            _sut.Handle(olArguments);
+            DummyCommand.OverloadCmdArg.Should().Be(5);
+        }
+
+        [Fact]
+        public void Handle_WorksWithOverloadedArrayMethods()
+        {
+            string[] arguments = { "test_command", "5", "7", "87.6", "111.111" };
+
+            _sut.Invoking(y => y.Handle(arguments))
+                .Should().NotThrow();
+            DummyCommand.OverloadedArgs.Length.Should().Be(4);
+
+        }
+
+        [Fact]
+        public void Handle_ParsesIntegerArguments_WhenMultipleAreZero()
+        {
+            string[] arguments = { "test_command", "0", "0", "0" };
+            DummyCommand.Total = -1;
+            _sut.Handle(arguments);
+            DummyCommand.Total.Should().Be(0);
+
         }
     }
 }
